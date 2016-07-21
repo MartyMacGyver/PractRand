@@ -1,0 +1,76 @@
+1. Portability of programs using PractRand:
+	In general, PractRands attempts to produce identical results across 
+	all platforms.  However, there are some exceptions, particularly 
+	with regard to endianness.  These exceptions include:
+		Some non-recommended RNGs may produce different results on big 
+			endian platforms than on little endian platforms
+		There are numerous minor endianness issues in the tests, and in 
+			how the TestBlocks for the tests are filled.  These tend to 
+			cause tests results to not be identical between big and 
+			little endian platforms, though the differences are minor.  
+	The recommended RNGs themselves are intended to return identical 
+	output on big and little endian platforms.  The ones that can act 
+	as entropy pools are intended to respond identically to the same 
+	input across big and little endian platforms.  However, small errors 
+	in endian portability may have crept in.  Furthermore, in many 
+	scenarios it can be very difficult for a user to correctly handle 
+	endianness portability, indepent of the behavior of library.  Thus, 
+	it is recommended that users who need strict endian independence 
+	think carefully about what that means and do plenty of testing.  
+
+2. Portability of PractRand itself:
+	I have built PractRand on:
+		gcc 4.6.1 / x86-64 (64-bit) / Ubuntu Linux
+		gcc 4.5.4 / MinGW x64 (64-bit)
+		gcc 3.4.5 / MinGW x86 (32-bit) - though TLS was not supported
+		VC 2010 x86 (32-bit)
+		VC 2013 x86 (32-bit)
+
+	PractRand uses a subset of C++98 and/or C99.  
+	explicitly: C++11 support is not required.  Same for C++13.  
+
+	When compiling on a different platform, the first thing that must be 
+		done is a few minor edits in include/PractRand/config.h
+
+	In addition to that, the basic version of PractRand requires:
+		note:
+			if you don't know what any of these means, don't freak;
+			this stuff all basically just translates to a reasonably 
+			compliant C++ compiler and a normal hardware environment 
+			typical of modern PCs and many embedded chips.  
+		memory be addressed in 8-bit units (sizeof(Uint8) == 1)
+		support for 8, 16, 32, and 64 bit signed and unsigned integers
+		including unsigned right-shifts on all unsigned integer types
+			and signed right-shifts on signed integer types
+		basic C++ support including namespaces and templates
+			 all decent C++ compilers qualify
+			 template support not completely required, but very strongly recommended
+			 exceptions are not required
+		the standard C/C++ library, including STL
+			 all decent C++ compilers support this
+		endianness must be either big endian or little endian, not "middle endian"
+			all remotely modern architectures qualify
+		auto-seeding & automatic entropy work best on either Windows or *nix
+			see platform_specifics.cpp
+			You can add code there for your platform
+		IEEE compliant floating point
+			only required for randf & randlf methods
+				and even then nothing very bad happens if it's not compliant
+				and it can be adjusted for non-IEEE formats in RNG_internals.h
+
+	If you are using PractRand from a multithreaded program, some additional 
+	requirements may apply:
+		compiler-level support for Thread Local Storage (TLS)
+			not actually mandatory, but autoseeding works better with TLS
+		the implementation of the C/C++ standard library used must be thread-safe
+			ie thread-safe malloc, etc
+		multithreading on unrecognized platforms may cause PractRand to leak, 
+			but only a 1 byte heap allocation per thread created
+
+	In addition to that, the tools (as opposed to the libraries) may require:
+		a command line environment
+		either pthreads or win32 (not actually required, but recommended)
+
+	Exception:
+		Test_calibration is not portable at this time.  
+		It's not ready for use by end users anyway, so that shouldn't matter.  

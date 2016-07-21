@@ -1,0 +1,424 @@
+version 0.92
+	RNGs
+		non-recommended
+			added two weakened variations of Trivium for testing purposes
+	tools
+		RNG_test now handles buffering when reading from stdin
+			improvement speed, particularly for multithreading runs, when using external PRNGs
+		RNG_test now uses C++11 functions to measure system time instead of CPU time
+			can be disabled by commenting out #define CPP_2011_SUPPORTED near the top of RNG_test.cpp
+				in case you don't have proper C++11 support
+	Tests:
+		new tests:
+			Pat5 - not very good, short-ish range linear test
+		BRank
+			fixed the part where it was slightly violating the abstraction layer
+		BCFN, BCFN_FF, BCFN_MT
+			improved accuracy of some calculations, which may help particularl long test runs
+	documentation
+		added summary of NIST STS results to Test_results.txt
+version 0.91
+	RNGs
+		efiix
+			revised seeding algorithm slightly
+		xsm32 & xsm64
+			changed algorithm
+			improved quality - mainly with respect to parallel generation
+			worsened speed as a result though
+			also improved seeding
+		non-recommended
+			fixed bugs in dual_cbuf, dual_cbuf_accum, isaac32_small
+			added isaac16_small, efiix4_small
+	Test Batteries:
+		core:
+			added an FPF parameterization
+			added BRank (it's a new test, see below)
+		expanded:
+			various changes?
+			(I don't usually remember to note when the expanded test set changes)
+	Tests:
+		new tests:
+			BRank - fairly standard binary matrix rank test
+			BCFN_MT - not working yet
+			BCFN_FF - not worth the extra time it takes?
+			FPMulti - not working yet
+		FPF
+			substantial optimizations
+			improvements to scoring & subtest breakdown
+			cleaned up some idiosyncracies
+		BCFN
+			significant optimizations
+				test changed slightly (necessary for optimizations)
+				might be slightly better or worse, can't tell yet
+				optimizations are currently optional in the code
+				though there's no way to turn them off from the command line tools
+			also changed handling of first call to test_blocks, elminated the "!" subtest
+		Gap-16
+			improved calibration data (more accurate & less conservative p-values at extremes)
+		DC6
+			improved speed
+	tools
+		RNG_test now defaults to -tlfail (stop when a test is failed)
+		fixed negative time issue in RNG_test
+	documentation
+		tried to improve a lot of docs
+version 0.90
+	other
+		accidentally had some debugging code enabled in 0.89 and 0.88 that was breaking autoseeding, fixed
+		had some header file case sensitivity issues
+			fixed them, revised testing methodology to fix the issue that prevented me from noticing them
+		added reinterpret-as RNG transforms
+			to act as if the RNGs data was being piped around and reinterpretted at a different size
+	RNGs
+		efiix
+			revised seeding algorithm slightly
+		various RNGs
+			added additional seeding options
+	tools
+		fixed a few bugs in RNG_output (and in the non-recommended RNGs)
+version 0.89
+	RNGs:
+		chacha:
+			disabled SIMD path, as alignment was not correct on dynamic allocations (isn't that counter to the spec?)
+		salsa:
+			added Salsa20, a predecessor to ChaCha
+	tools:
+		RNG_test:
+			added -tlfail / -tlmaxonly command line options
+				-tlfail causes it to stop testing once a failure is found
+				-tlmaxonly causes it to continue testing after failures are found (the default, at the moment)
+	other:
+		fixed a portability issue with header files that got introduced at the last moment in 0.88
+		some documentation changes (still needs more work)
+version 0.88
+	Important Bugfix:
+		a serious bug introduced at the last minute in 0.87 in sha2_based_pool
+		which gets used internally by autoseeding, among other things
+version 0.87
+	! The big changes were improved p-value quality, changed RNG test reporting format, more useful tools, and improved autoseeding.  
+	RNG algorithms:
+		chacha
+			added new RNG: chacha
+			this is a single 32 bit RNG with a variable quality setting, despite the naming convention
+			cryptographic security, random access, and fast seeding
+		jsf16 / jsf32 / jsf64
+			very very minor tweak to jsf32 initialization
+			removed jsf16 - with improvements in sfc16 it was no longer competitive
+			added fast-seeding option
+		sfc16 / sfc32 / sfc64
+			fixed bug in seeding-from-an-RNG (sfc16 only)
+			revised algorithm - now version 4 of sfc, old version moved in with the non-recommended RNGs
+				revised version is slightly larger, slightly higher quality
+			added fast-seeding option
+		xsm32 / xsm64
+			fixed bug in seeding-from-an-integer (xsm64 only)
+			fixed bug in random access (xsm64 only)
+			revised my rating downward by half a star
+				(from 3.0 to 2.5 stars on xsm32, from 4.0 to 3.5 on xsm64)
+				all indications are that it's very very good, but I just don't completely trust it yet
+		mt19937
+			added support for seeding from arbitrary length sequences of 32 bit integers
+				(a standard mt19937 seeding method added in 2002 that I hadn't noticed)
+			changed integer seeding algorithm for seeds >= 2**32
+		arbee
+			tweaked seeding
+			changed & optimized add_entropy_N
+			fixed metadata issue
+			adjusted interfaces slightly
+		other / non-recommended RNGs
+			fixed a couple bugs
+			added a couple algorithms
+	Test interfaces:
+		significant changes to how test results are reported
+		fixed a few issues, some of which could produce false positives in rare circumstances
+	Tests:
+		BCFN
+			dramatically improved quality of p-values
+			now reports multiple p-values instead of combining them in to a single p-value
+		Gap16
+			dramatically improved quality of p-values
+			now reports two p-values instead of combining them in to a single p-value
+		DC6
+			dramatically improved quality of p-values
+		FPF
+			dramatically improved quality of p-values
+		CoupGap
+			dramatically improved quality of p-values
+	adjusted error handling
+		user-defined callback called if present, otherwise it prints to stderr and does an exit(1)
+	fixed several minor issues in initialization
+		you can now tell whether PractRand found enough entropy by the return value of initialize_PractRand()
+	improved PractRands self-test funcationality
+		now verifies that mt19937, chacha, hc256, trivium, and isaac32x256 match test vectors
+		and verifies that xsm32, xsm64, and chacha appear to fast-forward and rewind correctly
+	revised autoseeding substantially
+		fixed issues that could occur when threads were created immediately after threads were destroyed
+		now uses the following scheme:
+			if TLS is supported and the platform is recognized
+				TLS + atomic increments manage thread-safe auto-seeding
+			if TLS is supported but the platform is NOT recognized
+				TLS + a leaked std::malloc(1) per thread manage thread-safe auto-seeding
+			if TLS is NOT supported
+				a slow method involving calls to std::clock() is used to manage thread-safe auto-seeding
+	revised documentation slightly
+		added documentation for parallel random number generation
+			seperate from the pre-existing documentation on multithreaded random number generation
+		revised thresholds for quality & speed in RNG engine ratings
+		other minor documentation changes
+	test programs
+		renamed to tools
+	tools
+		RNG_test
+			major revisions to interface - now command line driven, use --help for info
+			added support for alternate mode for checking seeding quality
+			added support for alternate mode for checking entropy pooling quality
+			changed MSVC project name
+		multithreaded RNG test
+			unified code with RNG_test, there is no longer a separate project for MT testing
+		RNG_output
+			fixed a bug that caused some RNGs to be used unseeded
+			revised naming scheme for nested RNGs: "[SShrink]jsf32"->"SShrink(jsf32)" or "[BDS256]jsf32"->"BDS(jsf32,8)"
+				well, partially, still needs work
+		Test_calibration
+			new test program, added to document some of the calibration process
+			I do NOT recommend the use of this for end users at this time.  
+
+version 0.86
+	RNGs algorithms:
+		changes to specific RNGs:
+			jsf16
+				it was using the wrong shifts for some reason, fixed
+				(that should improve quality)
+			efiix8x384, efiix16x384, efiix32x384, efiix64x384
+				tweaked seeding algorithm to improve speed
+			trivium
+				fixed bugs
+				improved validation
+	test programs:
+		new test programs:
+			Multithreaded RNG test
+				like the old RNG_test, but uses multiple threads.  
+				currently it likes to use about 5 threads total on the standard test set
+				(1 for the RNG, 1 for each core test, 1 for all the extra foldings)
+				but it doesn't keep those occupied all the time
+				it has a bad habit of recreating its threads frequently instead of keeping a pool of workers
+
+version 0.85
+	! The big changes were in RNG interfaces, portability, and random access RNG algorithms.  
+	fixed various issues preventing compilation on recent versions of gcc
+		tested on gcc 4.6.1
+	improved portability
+		no config.h changes needed now when switching between the most common compilers
+	RNG interfaces:
+		light-weight RNGs:
+			namespace changed: PractRand::RNGs -> PractRand::RNGs::LightWeight
+			now available for all RNGs
+			now defaults to using templates to implement light-weight RNGs
+			can be disabled by defining PRACTRAND_NO_LIGHT_WEIGHT_RNGS
+				(definition must occur prior to the #include of PractRand headers)
+		polymorphic RNGs:
+			fixed lack of virtual destructor (oops!)
+		entropy pooling RNGs:
+			namespace changed: PractRand::RNGs::Polymorphic::EntropyPools -> PractRand::RNGs::Polymorphic
+			namespace changed: PractRand::RNGs::Raw::EntropyPools -> PractRand::RNGs::Raw
+		serialization:
+			Polymorphic RNGs now have serialization & deserialization methods
+			other RNGs can be serialized as well, but no convenient interface atm
+		random access aka seeking:
+			now allows 128 bit seek distances (passed as two 64 bit numbers)
+		Boost / C++0x TR1 compatibility:
+			now ONLY available if PRACTRAND_BOOST_COMPATIBILITY is defined
+				(must be defined before PractRand headers are included)
+			now available on base class vRNG in addition to vRNG8/vRNG16/vRNG32/vRNG64
+	RNGs algorithms:
+		new algorithms:
+			trivium
+				*NOT ENABLED YET* (it's failing validation atm)
+				all previous crypto RNG in PractRand were large-state indirection-based RNGs
+				so I added a small-state non-indirection-based crypto RNG
+				unfortunately it is somewhat slow
+			xsm64
+				the old random access algorithms (lcg64_32 and clcg96_32) sucked
+				xsm64 is intended to replace clcg96_32
+				like clcg96_32 it uses 64 bit math internally
+				but unlike clcg96_32 it outputs a full 64 bits, not 32 bits
+				and unlike clcg96_32 it is acceptable for parallel uses
+			xsm32
+				the old random access algorithms (lcg64_32 and lcg96_32) sucked
+				xsm32 is intended to replace lcg64_32
+				it is not as fast, but comparable on 32 bit CPUs
+				and has significantly better quality and statespace
+				in particular, 
+		changes to specific RNGs:
+			sha2_based_pool
+				fixed a bug that could produce crashes
+				now in the PractRand::RNGs::Polymorphic namespace instead of PractRand::RNGs::Polymorphic::EntropyPools
+			arbee
+				changed input mixing algorithm; flush_buffers() now meaningful
+				namespace changed (see RNG category changes)
+				namespace changed: PractRand::RNGs::Polymorphic::EntropyPools -> PractRand::RNGs::Polymorphic
+				namespace changed: PractRand::RNGs::Raw::EntropyPools -> PractRand::RNGs::Raw
+			sfc32, sfc64
+				tweaked integer seeding to reduce chances of any 2 seeds being nearby in a cycle
+			isaac_with_sha2_pool
+				removed - if you want something comparable, use sha2_based_pool to seed a faster RNG
+			efiix8x256, efiix16x256, efiix32x256, efiix64x256
+				renamed to efiix8x384, efiix16x384, efiix32x384, efiix64x384
+				tweaked algorithm to improve security
+			isaac32x256, isaac64x256
+				tweaked implementation to improve speed on some compilers
+				changed seeding - now closer to reference algorithm & higher quality
+				validation code was added to make sure that this is working correctly
+			hc256
+				tweaked implementation to improve speed on some compilers
+				validation code was added to make sure that this is working correctly
+			mwlac64, mwlac32, mwlac16
+				removed, for real this time (was supposed to be removed in the prior version)
+			mt19937
+				validation code was added to make sure that this is working correctly
+			lcg64_32
+				removed - use xsm32 instead
+			clcg96_32
+				removed - use xsm64 instead
+	documentation:
+		added entropy pools documentation
+		numerous revisions to old documentation
+	example program:
+		split example program in to two example programs:
+			program 1: RNG_benchmark
+				RNG speed testing
+			program 2: RNG_output
+				specify RNG algorithm by name on the command line
+				dump RNG output to stdout
+			program 3:
+				use statistical tests on an RNGs output
+		changed how speed test results are displayed
+	new example program:
+		multithreaded RNG testing, currently WIN32 only
+	tests:
+		revised existing transforms:
+			lowbits - can now operate on 4 bit units in addition to 8/16/32/64
+
+version 0.84
+	RNGs:
+		tweaked existing recommended RNGs:
+			jsf32 - made more conformant to Robert Jenkins code
+			jsf16 -	adjusted constants in jsf16 to improve avalanche properties
+			hc256 - fixed two bugs in hc256::walk_state (could cause autoseeding to crash)
+		added new recommended RNG:
+			sfc16 / sfc32 / sfc64:
+				relatively low quality, but very fast and small
+				uses only addition, xor, shift, and barrel-shift
+				state size is only 3 words
+		removed existing recommended RNG:
+			mwlac32 / mwlac64:
+				Redundant when compared to jsf32/jsf64 to justify inclusion.  
+		added new section to full version: "other" aka "NotRecommended"
+			these are RNGs that are not recommended for normal usage
+			they are intended for evaluating test effectiveness only
+			they offer polymorphic implementations only, no raw implementations
+	documentation:
+		added test results for some RNGs
+	example program:
+		changed how results are displayed
+		added performance measuring
+		moved lists of tests out of example program, in to the library
+	tests:
+		added new transform: "switching"
+
+version 0.83
+	fixed issues with randi_fast methods
+		missing symbol for one version, lack of return statement for another
+	fixed bugs in the HC-256 implementation
+		was xoring output with an uninitialized value
+		was walking the output buffer in the wrong direction
+	fixed license issues
+		sha2 code now public domain (and smaller and a little faster)
+		mt19937 code now public domain (and significantly faster)
+	moved code defining standard test sets from example program to library
+		new header PractRand/test_batteries.h
+
+version 0.82
+	fixed various issues preventing compilation on gcc
+		now builds on MSVC & gcc/MinGW
+		hopefully compatible with others as well
+	added more tests:
+		FPF - Floating Point Frequency, not very useful, slow on some settings
+		CoupGap - Coupon / Gap hybrid, still in development but usable
+	revised sample program slightly
+		added get_more_tests in addition to get_core_tests and get_standard_tests*
+		adjusted misc. details
+	tweaked some RNGs:
+		arbee: tweaked entropy accumulation & interface slightly
+
+version 0.81
+	fixed the missing symbol "randi_fast_implementation"
+	fixed the bloated file sizes on PractRand.lib and PractRand_full.lib
+	fixed some rare issues with uniform floating point distribution
+	improved various bits of documentation
+	removed various files that did not belong in this package
+	now supports limited compatibility with C++0x TR1 RNG distributions
+		only on vRNG8, vRNG16, vRNG32, and vRNG64
+	tweaked various RNGs:
+		jsf: made more conformant to Robert Jenkins code, blocked some bad states
+		arbee: improved quality, eliminated bad cycles
+		efiix: reverted to older faster version
+	checked licenses on RNGs
+		jsf, ibaa
+
+verion 0.80 - initial release
+	RNG stuff:
+		RNG types
+			Raw
+			light-weight
+			Polymorphic
+			entropy pool
+			inline
+			template adaptor (Raw -> light-weight)
+		RNG interface
+			output
+				RNG output type abstraction
+				uniform integers
+				fast (semi-)uniform integers
+				uniform floating point
+			seeding
+				seed from 64 bit integer
+				seed from any polymorphic RNG
+				seed automatically
+				special seeding interface for entropy pools
+					default state
+					add_entropy8/add_entropy16/add_entropy32/add_entropy64/add_entropy_N
+					add_entropy_automatically
+					flush_buffers
+			other
+				state walking, is useful for
+					serialization
+					deserialization
+					checksuming
+					monitoring internal state (avalanche)
+					used internally for generic seeding
+				optional RNG methods
+					seek_forward, seek_backward
+					entropy accumulation functions, see seeding / entropy pools above
+		recommended RNGs:
+			jsf64, jsf32, jsf16
+			mwlac64, mwlac32
+			clcg96_32, lcg64_32   <--- lcg64_32?  not really recommended is it?
+			hc256
+			isaac32x256, isaac64x256
+			efiix8x256, efiix16x256, efiix32x256, efiix64x256 *still in development
+			mt19937
+		entropy pools:
+			arbee
+			sha2_based_pool
+			isaac_with_sha2_pool
+	Statistical tests:
+		recommended tests:
+			DC6
+			BCFN
+			Gap-16
+		test transforms:
+			*multiplex
+			shrink
+			lowbits
+			FirstNofM

@@ -1,0 +1,268 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5036F8F4-679D-4B76-9465-BE2430AB1CF3}</ProjectGuid>
+    <RootNamespace>PractRand_Full</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Full</Optimization>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Full</Optimization>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\non_uniform.cpp" />
+    <ClCompile Include="..\..\src\platform_specifics.cpp" />
+    <ClCompile Include="..\..\src\math.cpp" />
+    <ClCompile Include="..\..\src\rand.cpp" />
+    <ClCompile Include="..\..\src\RNGs\arbee.cpp" />
+    <ClCompile Include="..\..\src\RNGs\chacha.cpp" />
+    <ClCompile Include="..\..\src\RNGs\salsa.cpp" />
+    <ClCompile Include="..\..\src\RNGs\sha2_based_pool.cpp" />
+    <ClCompile Include="..\..\src\RNGs\trivium.cpp" />
+    <ClCompile Include="..\..\src\RNGs\xsm.cpp" />
+    <ClCompile Include="..\..\src\sha2.cpp" />
+    <ClCompile Include="..\..\src\test_batteries.cpp" />
+    <ClCompile Include="..\..\src\tests.cpp" />
+    <ClCompile Include="..\..\src\RNGs\efiix.cpp" />
+    <ClCompile Include="..\..\src\RNGs\hc256.cpp" />
+    <ClCompile Include="..\..\src\RNGs\isaac.cpp" />
+    <ClCompile Include="..\..\src\RNGs\jsf.cpp" />
+    <ClCompile Include="..\..\src\RNGs\mt19937.cpp" />
+    <ClCompile Include="..\..\src\RNGs\sfc.cpp" />
+    <ClCompile Include="..\..\src\RNGs\other\fibonacci.cpp" />
+    <ClCompile Include="..\..\src\RNGs\other\indirection.cpp" />
+    <ClCompile Include="..\..\src\RNGs\other\mult.cpp" />
+    <ClCompile Include="..\..\src\RNGs\other\simple.cpp" />
+    <ClCompile Include="..\..\src\RNGs\other\transform.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\PractRand\config.h" />
+    <ClInclude Include="..\..\include\PractRand\endian.h" />
+    <ClInclude Include="..\..\include\PractRand.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\all.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\arbee.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\chacha.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x384.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x384.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x384.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x384.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\salsa.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\sha2_based_pool.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\trivium.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\xsm32.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\xsm64.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\BCFN_MT.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\BRank.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\FPMulti.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\Pat5.h" />
+    <ClInclude Include="..\..\include\PractRand_full.h" />
+    <ClInclude Include="..\..\include\PractRand\rng_adaptors.h" />
+    <ClInclude Include="..\..\include\PractRand\rng_basics.h" />
+    <ClInclude Include="..\..\include\PractRand\rng_helpers.h" />
+    <ClInclude Include="..\..\include\PractRand\rng_internals.h" />
+    <ClInclude Include="..\..\include\PractRand\sha2.h" />
+    <ClInclude Include="..\..\include\PractRand\test_batteries.h" />
+    <ClInclude Include="..\..\include\PractRand\test_helpers.h" />
+    <ClInclude Include="..\..\include\PractRand\tests.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\hc256.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\isaac32x256.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\isaac64x256.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\jsf32.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\jsf64.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\mt19937.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc16.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc32.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc64.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\fibonacci.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\indirection.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\mult.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\simple.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\special.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\transform.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\BCFN.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\CoupGap.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\DistC6.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\FPF.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\Gap16.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\transforms.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\doc\Tests_performance.txt" />
+    <None Include="..\..\doc\tools.txt" />
+    <None Include="..\..\doc\index.html">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\..\doc\installation.txt" />
+    <None Include="..\..\doc\license.txt" />
+    <None Include="..\..\doc\portability.txt" />
+    <None Include="..\..\doc\PractRand.txt" />
+    <None Include="..\..\doc\RNG_engines.txt" />
+    <None Include="..\..\doc\RNG_entropy_pools.txt" />
+    <None Include="..\..\doc\RNG_interface_variations.txt" />
+    <None Include="..\..\doc\RNG_multithreading.txt" />
+    <None Include="..\..\doc\RNG_parallel.txt" />
+    <None Include="..\..\doc\RNG_speed.txt" />
+    <None Include="..\..\doc\RNG_usage.txt" />
+    <None Include="..\..\doc\Tests_batteries.txt" />
+    <None Include="..\..\doc\Tests_engines.txt" />
+    <None Include="..\..\doc\Tests_overview.txt" />
+    <None Include="..\..\doc\Tests_results.txt" />
+    <None Include="..\..\doc\Tests_usage.txt" />
+    <None Include="..\..\doc\to_do.txt" />
+    <None Include="..\..\doc\versions.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

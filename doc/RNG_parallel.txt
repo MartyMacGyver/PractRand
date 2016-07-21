@@ -1,0 +1,66 @@
+
+========================================================================
+Parallel Random Number Generation issues:
+========================================================================
+
+Parallel RNG issues arise when you have multiple RNG instances that 
+need to produce uncorrelated output.  This is most often thought of in 
+distributed computing applications, but it is the same basic issue that 
+can arise between separate runs of a single program on the same 
+computer.  
+
+Typical RNG-using applications don't really care much if different RNG 
+instances are slightly correlated with each other.  Some applications 
+might care a lot though.  
+
+If you need to avoid correlation between different instances of your 
+RNG, then you need to use an RNG algorithm with a large statespace and 
+relatively little inter-state correlation.  
+
+PractRand RNG quality ratings already take such factors in to account, 
+so you can just use this simple chart to figure out a minimum quality 
+rating for your parallel random number generation scenario.  You can 
+find a list of recommended RNGs with quality ratings in 
+RNG_engines.txt.  
+
+  Parallel RNG usage scenario definitions:
+scenario name   total seedings   total nums generated   max correlation
+light           < 2**5           < 2**45                low
+moderate        < 2**20          < 2**60                low
+heavy           < 2**45          < 2**75                undetectable
+extreme         < 2**80          < 2**110               undetectable
+
+  Parallel RNG usage scenario recommendations:
+scenario name   minimum quality rating
+light           2 star
+moderate        3 star
+heavy           4 star
+extreme         5 star
+
+note that "total nums generated" refers to the total number of RNG 
+outputs used across all instances of the RNG.  So a million computers 
+each using a quadrillion random numbers would be 2**70 numbers generated.  
+If each of those million computers seeded an RNG on average a thousand 
+times during the course of producing those quadrillion random numbers 
+then the total seedings would be 2**30.  
+
+Also, the seed for each RNG instance should be distinct from all other 
+instances seeds.  PractRand autoseeding is normally sufficient to provide 
+that kind of uniqueness, at least on PRNGs where that is liable to be the 
+limiting factor.  However, on unrecognized platforms (meaning platforms 
+that are neither windows nor *nix) or exceptional failures (like fopen 
+failing on /dev/urandom) autoseeding may provide lower quality seeding.  
+You can distinguish such cases by checking the return value of 
+PractRand::initialize_PractRand() - it is true if autoseeding managed 
+to obtain enough entropy for high quality seeding, or false if it 
+failed to find much entropy and will produce low quality seeds.  
+
+If you're not going to use autoseeding then either you have to use a 
+scheme for ensuring unique keys across your domain, either 
+probabilistically (which requires large seeds and lots of seeding 
+entropy) or using something like a Globally Unique IDentifier (which also 
+tends to require large seeds, though not quite as large).  
+
+Multithreaded RNG usage is a special case of parallel random number 
+generation.  For issues specific to multithreaded programs generating 
+random numbers, see RNG_multithreading.txt.  

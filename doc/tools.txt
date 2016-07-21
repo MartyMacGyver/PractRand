@@ -1,0 +1,48 @@
+PractRand includes several programs that use the library to do useful things:
+1. RNG_output
+	A command-line driven program.  This takes an RNG name and an number of 
+	bytes on the command line and prints out that many raw random bytes to 
+	stdout.  For use in unix-like environments where the output might be piped 
+	somewhere useful.  It has an optional third parameter to specify the seed 
+	to use.  The seed should be a 64 bit integer expressed in hexadecimal.  If 
+	no seed is specified it will pick one at random.  
+		example - using the RNG named "jsf32", generate about 1.1 terabytes, 
+		using a randomly generated seed
+			./RNG_output jsf32 1234567890000
+2. RNG_test
+	This command-line driven program applies PractRand statistical tests to an 
+	RNG.  Anomalous test results will be reported to the user.  The definition 
+	of 'anomalous' for this purpose is adjustable from the command line, as is 
+	the choice of which RNG to test and which set of tests to use.  An external 
+	RNG can be used if its output is piped in through stdin.  A file can be 
+	used if it is piped in through stdin.  
+	This program also has alternate modes that allow it to test seeding or 
+	entropy pooling quality instead of simple RNG output.  It works by 
+	generating a random sequence of seeds with minimal hamming distance from 
+	each other, seeding the targetted RNG with them, generating 64 bits of RNG 
+	output using each seed, and concatonating those sets of 64 bits in to a 
+	stream of data that is tested as if it were produced by an RNG.  
+	Sample command lines for use on linux:
+		testing a PractRand RNG:
+			./RNG_test jsf32
+		testing a file:
+			cat random_data_file | ./RNG_test stdin
+		testing data piped in from RNG_output:
+			./RNG_output jsf32 123456789000 | ./RNG_test stdin32
+	Sample command lines for use on windows:
+		testing a PractRand RNG:
+			RNG_test jsf32
+		testing a file:
+			type random_data_file | RNG_test stdin
+		testing data piped in from RNG_output:
+			RNG_output jsf32 123456789000 | RNG_test stdin32
+3. RNG_benchmark
+	Measures speeds of all recommended RNGs and all candidate RNGs.  
+	Candidate RNGs may get an unfair advantage depending upon how this 
+	program gets linked, as they are in the same compilation unit.  
+	Non-recommended RNGs are not optimized and are not benchmarked.
+4. Test_calibration
+	Various bits of code used during calibration of the tests.  Not coherently 
+	organized atm.  Not intended for end users, but included as partial 
+	documentation for the calibration process used on the tests.  
+

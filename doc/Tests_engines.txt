@@ -1,0 +1,67 @@
+
+Specific Tests in PractRand:
+Recommended tests:
+	BCFN - checks for long range linear correlations (bit counting);
+		in practice this often detects Fibonacci style RNGs that 
+		rely upon large lags to defeat other statistical tests.  
+		Two integer parameters are used - the first is the minimum 
+		"level" it checks for bias at (it checks all higher levels 
+		that it has enough data for), higher values are faster but 
+		can miss shorter range correlations.  The recommended 
+		minimum level is 2, as that helps it skip the slowest parts 
+		and avoids redundancy with DC6 checking for the shortest 
+		range linear correlations, while still doing a reasonable 
+		amount of work for how much memory it has to scan.  
+		The second integer parameter helps determine the amount 
+		of memory and cache it will use in testing.  It is the 
+		log-base-2 of the size of the tables it uses internally.  
+		Recommended values are 10 to 15, larger values if cache is 
+		large, lower values if cache is small.  
+		Each individual "level" of this is a frequency test on 
+		overlapping sets of hamming weights.  
+	DC6 - checks for short range linear correlations (bit counting); 
+		takes several parameters that determine the size of 
+		integers it operates on internally, the number of adjacent 
+		such integers it looks for correlations between, and which 
+		information it uses for each such integer; for recommended 
+		values see the code for get_core_tests() and 
+		get_expanded_core_tests() in test_batteries.cpp.  
+		This is a frequency test on overlapping sets of hamming 
+		weights.  
+	Gap16 - A variation on the classic "Gap" test.  No parameters 
+		are needed.  
+	BRank - A fairly standard binary matrix rank test.  The most 
+		original part of it is the control logic that decides 
+		when data should be taken from the RNG output stream to 
+		make a matrix and what size matrix it should be.  The 
+		parameter is a log-scale amount of time per gigabyte it 
+		spends calculating matrix ranks.  
+		Due to the coarse-grained nature of the results it 
+		produces, precise p-values are impossible for most of 
+		its subtests.  
+	FPF - "floating point frequency" test; contrary to the name 
+		it's purely integer math.  Can be slow on some settings.  
+		This checks for very short range correlations, even shorter 
+		than DC6, especially those correlations involving lots of 0 
+		bits.  
+		Roughly speaking, this test does a frequency test applied to 
+		the binary format of floating point numbers storing the 
+		integer values of overlapping windows of the original data 
+		stream.  
+Transforms:
+	(these appear as tests but are simply wrappers for other tests)
+	multiplex - simply routes operations on this test to multiple 
+		subtests
+	lowbits - for each 1,2,4,or 8 bytes this takes the lowest 1,2,4,8,16, 
+		or 32 bits and routes them to the wrapped tests)
+	shrink - 
+	FirstNofM - 
+	BWT - 
+Non-recommended tests:
+	CoupGap - "Coupon / Gap hybrid" test; still in development;
+		behavior is similar to most gap tests
+	...many more still to come
+
+*****************************************************************************
+
+

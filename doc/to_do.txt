@@ -1,0 +1,96 @@
+post-0.92:
+	high priority items
+		create famework for testing tests & batteries
+		revise seeding for all recommended RNGs - reduce seedspace relative to statespace to allow probabilistic proof that all seeds are good
+		new tests, finish &| calibrate some of them - BCFN variants, FPMulti, ???
+		improve calibration for long DC6:9x1-1 tests
+			may need to make find_test_distribution multithreaded; would take a month or more otherwise
+		finish changes & validation for xsm64 & xsm32
+		finish changes & validation for efiix
+		add regression tests for more RNGs
+		move inter-test weightings in to the batteries, not the tests themselves
+		some tests have changed ; is recalibration necessary?
+		finish adjusting RNG_from_name.h to allow it to source metadata & descriptions of RNGs
+	considering
+		add some avalanche testing code
+		changes to seeding functions - less non-native integer size math, less use of other PRNGs
+		add smaller parameterizations of efiix (or just different)
+		FPF "small footprint, short stride" path is still doing the stupid bit reversal thing, fix that sometime (is this fixed now?)
+	add more self-tests, regression tests, etc
+		checks that serialization works correctly
+		add self-test to SHA2-512 implementation (why isn't there one there already?)
+		add regression tests for a wider variety of recommended RNGs
+	review / reorganize header files
+		some headers protect against multiple inclusion, some don't
+		some headers protect against inclusion prior to dependencies, some don't
+		test_helpers should probably be split in two
+	RNG testing
+		consider splitting in to a separate library
+			yes, it's already a semi-separate .lib file, but...
+			maybe it should also have separate:
+				names, SourceForge project pages, VC solution files, downloads?
+		revise specific RNG testing algorithms
+*			Gap16
+				possibly count sequential identical gaps
+				try to preserve lowest bit of short gap distances?
+			DC6
+				improve the calibration data for longer test runs
+			BCFN
+				assymetric probability variation - reduced mispredicted branches by ~64 per kilobyte on BCFN(2,*)
+					would make it much harder to calibrate though
+					while I'm at it, pre-subtract the expected bit counts - won't help much, but a tiny bit
+				hybridize with Rares test - the data is already readily available
+				add dab_monobit2 test - the data is already readily available
+			CoupGap
+				try to get more testable factors per run
+				maybe not worthwhile, eliminate?
+*			FPF
+				add FPG variant?
+			Rares
+				publish?
+			BCN_generic
+				worth more investigation
+			BRank
+				definitely fix abstraction layer violations
+				maybe don't do multiple matrices on non-power-of-2 sizes?
+			mix of tests to switch between on a single stream
+				BRank is an obvious candidate since it doesn't scale well and take too much time per data relative to other tests
+				FPF is another possible candidate, since it doesn't need much continuity and is a bit slow relative to others
+			...others
+				most of the others don't appear to be worth the effort
+		create new tests
+			as BCFN, but calc the avg # of 1s in blocks after each sequence of #s of 1s
+			something gapish on more than 16 bits at a time
+			consider more autowindowing / leveling
+			investigate idea: design a test for running on GPUs
+		possible modifications to test interfaces
+			allow a single test to be multithreaded?
+				a bit nasty to code, and the interface might be nasty too, but it is quite doable
+	tools
+		add an adaptor to produce a polymorphic RNG from a raw RNG automatically
+			(to simplify users sticking their own RNG in to the test program at full performance)
+		possibly move TestManager class in to library?
+	choices in library to be reconsidered:
+		names of randlf, randli
+			perhaps: rand_sint32, rand_sint64, rand_uint32, rand_uint64, rand_float, rand_double, fast_uint32
+		ranges to randf, randi, randlf, randli: [min..max) or [min..max]
+		should unseeded RNGs require explicit SEED_NONE flag?
+		change return type of RNG::get_name to something that doesn't require STL (ie write to buffer)?
+		should split add_entropy* methods off from vRNG in to a new child class?
+		serialization interface needs more work & thought I think
+			same for seeding of non-polymorphic RNGs
+		???
+	review and add to documentation
+		detailed descriptions of RNGs, particularly recommended RNGs
+		RNG basics
+		RNG selection
+		RNG qualities
+		RNG distributions
+		RNG seed management and entropy collection
+		RNGs and multithreading
+		RNGs and parallel computing
+		RNGs and exotic platforms
+		RNGs and cryptography
+		RNG testing / RNG tests
+		RNG theory and analysis
+

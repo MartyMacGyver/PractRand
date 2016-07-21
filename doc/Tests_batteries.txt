@@ -1,0 +1,64 @@
+========================================================================
+PractRand defines several batteries of tests for RNGs.  These are 
+defined as PractRand::Tests::ListOfTests and as functions in 
+PractRand::Tests::Batteries that return ListOfTests objects.  When you 
+are done with a ListOfTests returned by one of those functions you 
+should call PractRand::Tests::Batteries::destruct_tests on it to 
+deallocate the resources used by the tests.  
+
+The predefined batteries of test in PractRand can be thought of as 
+organized in a 2x3 grid.  One axis corresponds to whether the testing 
+algorithms used are the normal set of algorithms or the expanded set 
+of algorithms.  The other axis corresponds to the degree of "folding" 
+by which PractRand concentrates extra effort on the lowest bits of 
+the PRNGs output.  
+
+This chart shows the functions used to instantiate each battery of 
+tests from the grid.  Each of these functions can be found in the 
+PractRand::Tests::Batteries namespace.  
+                  Normal Test Set        Expanded Test Set
+No Foldings       get_core_tests()       get_expanded_core_tests()
+Standard Foldings get_standard_tests()   get_expanded_standard_tests()
+Extra Foldings    get_folded_tests()     get_expanded_folded_tests()
+
+The test sets are:
+	Normal Test Set: (recommended)
+	These tests are optimized for maximum effectiveness per cycle.  
+
+	Expanded Test Set:
+	These tests reduce per-cycle effectiveness in order to improve 
+	per-bit effectiveness.  
+
+The folding options are:
+	No Folding:
+	Just use the tests.  For cases where you're confident that no 
+	low-bit issues could occur.  Perhaps the algorithm is provably 
+	symetric in terms of bit positions, though even then folding 
+	sometimes helps.  
+
+	Standard Foldings: (recommended)
+	Concentrate extra testing on the lowest bit positions.  Usually a 
+	good idea.  This is done by having multiple instances of the test 
+	set - the core set just tests the data, but duplicate sets work on 
+	additional datastream created by skipping all bits of input except 
+	for the lowest bit(s) of each integer.  These extra datastreams 
+	slow down testing by about 30% and test evaluation by about 150%.  
+	- Important Note: This is actually several closely related sets 
+	of foldings, one for each PRNG output format (one for 8 bit 
+	integers, one for 16 bit integers, 32 bit, 64 bit, and one 
+	for unidentified PRNG output formats).  Which one gets used 
+	is determined by examining the PRNGs metadata.  If for some 
+	reason the metadata is erroneous or missing this may not be a 
+	good idea.  
+
+	Extra Foldings:
+	Similar to Standard Foldings, except that instead of using 
+	the metadata to identify the output format of the PRNG (and 
+	thus which bits of metadata might benefit from extra testing) 
+	this variant uses a much larger number of extra datastreams 
+	to try to find good bits to target for every common output 
+	format.  This may cause excessive amounts of memory to be 
+	used on longer data streams (excessive meaning too much for 
+	a 32 bit program; try using a 64-bit build instead).  
+
+

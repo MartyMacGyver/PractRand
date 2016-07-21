@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\RNGs">
+      <UniqueIdentifier>{db9c782d-92a5-4277-9c0d-711b51bb0b60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\RNGs">
+      <UniqueIdentifier>{ea63ca0d-708f-4097-995b-c50f48a55e74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\rand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sha2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\efiix.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\hc256.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\isaac.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\jsf.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\mt19937.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\sfc.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\arbee.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\sha2_based_pool.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\trivium.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\xsm.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\platform_specifics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\chacha.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RNGs\salsa.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\non_uniform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\PractRand\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\endian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand_full.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\rng_basics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\rng_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\rng_internals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\sha2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\hc256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\isaac32x256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\isaac64x256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\jsf32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\jsf64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\mt19937.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\arbee.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\efiix8x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\efiix16x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\efiix32x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\efiix64x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\sfc16.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\sfc32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\sfc64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\sha2_based_pool.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\trivium.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\xsm32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\xsm64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\all.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\chacha.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\PractRand\RNGs\salsa.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

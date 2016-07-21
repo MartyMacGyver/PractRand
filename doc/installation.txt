@@ -1,0 +1,33 @@
+1.  Configuring PractRand:
+The file include/PractRand/config.h contains PractRands configuration.  
+Depending upon your platform and compiler, you may need to edit it.  It 
+includes comments that tell you what to do.  
+
+2.  Building PractRand:
+PractRand is intended to be built as a static library. 
+PractRand currently comes with precomiled static libraries (.lib files) 
+built with MSVC for WIN32 / x86.  
+If you can't use the precompiled .lib files it comes with then you'll 
+need to rebuild PractRand.  
+It comes with an MSVC project file.  
+It does *NOT* come with build files for make / autoconf / etc.  
+If you can't use the MSVC project file then you'll need to manually 
+compile and link all .cpp files in the PractRand src/ directory and 
+all of its subdirectories, recursively.  At the moment that means:
+src/*.cpp and src/RNGs/*.cpp and src/RNGs/other/*.cpp
+
+On linux I build the PractRand library using these command lines:
+g++ -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -Iinclude -pthread
+ar rcs libPractRand.a *.o
+(then I delete the leftover .o files, but that's not necessary)
+
+And then I build the PractRand command line tools like this:
+g++ -o RNG_test tools/RNG_test.cpp libPractRand.a -O3 -Iinclude -pthread
+g++ -o RNG_benchmark tools/RNG_benchmark.cpp libPractRand.a -O3 -Iinclude -pthread
+g++ -o RNG_output tools/RNG_output.cpp libPractRand.a -O3 -Iinclude -pthread
+
+3.  Linking with PractRand:
+Same as for any other static library on your compiler.  
+
+Which might mean -lPractRand on the gcc / *nix example above if the static 
+library is named libPractRand.a and gcc can figure out where it's located.  

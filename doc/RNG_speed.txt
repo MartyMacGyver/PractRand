@@ -1,0 +1,171 @@
+For a typical application any recommended RNG in PractRand (except sha2_based_pool) 
+is more than fast enough.  If your program needs more speed though, here are some 
+guidelines:
+1. If you are on a 64 bit CPU & compiler, use a 64 bit RNG.  Likewise if you are on 
+	a 32 bit CPU & compiler use a 32 bit RNG, etc.  In most cases the RNGs name 
+	should make it obvious what word size it uses.  Among the recommended RNGs the 
+	only exceptions are clcg96_32 which uses 64 bit words internally but only 
+	outputs 32 bits at a time, hc256 which uses 32 bit words, and the entropy 
+	pooling RNGs (arbee is 64 bit, sha2_based_pool uses 64 bit words, and 
+	isaac_with_sha2 uses 64 bit words).  
+2. If you need extra speed and don't need polymorphism, consider using the raw or 
+	light-weight versions of the RNGs.  They are available for almost all RNGs and 
+	are usually faster than their polymorphic equivalents.  
+3. The fastest recommended RNGs are jsf and sfc.  If you're on 64-bit then arbee is 
+	also good (and it also offers entropy pooling and a guarantee of no short 
+	cycles).  
+
+Notes on entropy pools:
+	Entropy pools are listed twice in the results.  The section titled 
+	"entropy pooling RNGs:" lists the speed at which they generate random numbers.  
+	It includes both polymorphic and light-weight results for those few 
+	entropy pools that have both.  
+	The section titled "Entropy pool input speeds:" lists the speed at which 
+	entropy can be added to them.  It is listed in MEGABYTES per second, not 
+	gigabytes per second like all other numbers.  It lists seperate speeds for 
+	add_entropy8 / add_entropy16 / etc.  For entropy pools that buffer input, 
+	the results are usually the same regardless of whether the entropy is 
+	handed to it in 8 or 16 or 32 or 64 bit units, but for entropy pools that 
+	do not buffer input this can make a big difference.  
+
+*******************************************
+*******************************************
+64 bit gcc
+*******************************************
+*******************************************
+notes:
+	CPU: Intel Core i5 2500
+	compiler: g++ (GCC) 4.5.4 20111030 (prerelease) [svn/rev.180676 - mingw-w64/oz]
+	OS: Windows 7 (64 bit)
+	comments: The "canidate" RNGs (VeryFast* & RanrotVariant*) were in the same 
+		compilation unit as the benchmark.  It appears that some gcc optimizations 
+		are refusing to cross compilation unit boundaries, giving the candidate RNGs 
+		an large unfair advantage.  
+	The command line used to build was:
+		g++ -o bin/RNG_benchmark-gcc-x64.exe src/*.cpp src/RNGs/*.cpp test/RNG_benchmark.cpp -Iinclude -O3
+Random number generation speeds:
+  light-weight   polymorphic    seeding      name
+small fast RNGs:
+  1.189 GB/s  :  1.181 GB/s  :  14471 KHz  :  jsf32
+  2.403 GB/s  :  2.334 GB/s  :  22248 KHz  :  jsf64
+  1.295 GB/s  :  1.271 GB/s  :  36327 KHz  :  sfc32
+  2.532 GB/s  :  2.500 GB/s  :  36326 KHz  :  sfc64
+random access RNGs:
+  1.002 GB/s  :  0.985 GB/s  :  43456 KHz  :  xsm32
+  2.011 GB/s  :  1.962 GB/s  :  43034 KHz  :  xsm64
+entropy pooling RNGs:
+  2.065 GB/s  :  2.020 GB/s  :  27917 KHz  :  arbee
+  ----- GB/s  :  0.062 GB/s  :   1300 KHz  :  sha2_based_pool
+crypto / high quality RNGs:
+  0.845 GB/s  :  0.578 GB/s  :     75 KHz  :  hc256
+  0.740 GB/s  :  0.708 GB/s  :   4465 KHz  :  trivium
+  0.722 GB/s  :  0.519 GB/s  :    453 KHz  :  isaac32x256
+  1.449 GB/s  :  1.024 GB/s  :    374 KHz  :  isaac64x256
+  0.985 GB/s  :  0.736 GB/s  :    370 KHz  :  efiix32x384
+  1.994 GB/s  :  1.620 GB/s  :    372 KHz  :  efiix64x384
+  0.296 GB/s  :  0.275 GB/s  :   4875 KHz  :  chacha
+  0.277 GB/s  :  0.263 GB/s  :   4639 KHz  :  salsa
+popular RNGs:
+  0.758 GB/s  :  0.674 GB/s  :    142 KHz  :  mt19937
+16 bit variants:
+  0.551 GB/s  :  0.750 GB/s  :  27427 KHz  :  sfc16
+  0.341 GB/s  :  0.411 GB/s  :    363 KHz  :  efiix16x384
+8 bit variants:
+  0.176 GB/s  :  0.302 GB/s  :    362 KHz  :  efiix8x384
+candidate RNGs: (not recommended, but almost)
+  2.892 GB/s  :  1.147 GB/s  :  VeryFast32
+  5.799 GB/s  :  2.327 GB/s  :  VeryFast64
+  2.906 GB/s  :  1.263 GB/s  :  sfc_alternative32
+  5.822 GB/s  :  2.532 GB/s  :  sfc_alternative64
+  1.981 GB/s  :  0.792 GB/s  :  ranrot_variant32
+  3.861 GB/s  :  1.597 GB/s  :  ranrot_variant64
+16 & 8 bit candidate RNGs: (not recommended, but almost)
+  0.963 GB/s  :  0.431 GB/s  :  VeryFast16
+  0.680 GB/s  :  0.304 GB/s  :  ranrot_variant16
+  0.390 GB/s  :  0.199 GB/s  :  ranrot_variant8
+  1.097 GB/s  :  0.448 GB/s  :  sfc_alternative16
+  0.524 GB/s  :  0.363 GB/s  :  xsm16
+
+Entropy pool input speeds:
+  arbee
+    add_entropy8  : 239.7 MB/s
+    add_entropy16 : 487.3 MB/s
+    add_entropy32 : 623.8 MB/s
+    add_entropy64 : 755.0 MB/s
+    add_entropy_N : 745.2 MB/s
+  sha2_based_pool
+    add_entropy8  :  67.5 MB/s
+    add_entropy16 :  64.0 MB/s
+    add_entropy32 :  66.1 MB/s
+    add_entropy64 :  66.2 MB/s
+    add_entropy_N :  68.4 MB/s
+
+*******************************************
+*******************************************
+32 bit MSVC
+*******************************************
+*******************************************
+notes:
+	CPU: Intel Core i5 2500
+	compiler: Microsoft Visual C++ 2010 Express, 10.0.30319.1
+	OS: Windows 7 (64 bit)
+	comments: 32 bit executable despite the 64 bit CPU & OS, so the 64 bit RNGs 
+		were penalized.  
+		ChaCha was using SSE2 in this build, which my implementation can't 
+		do on most other platforms at this time.  
+Random number generation speeds:
+  light-weight   polymorphic    seeding      name
+small fast RNGs:
+  2.404 GB/s  :  1.115 GB/s  :  16814 KHz  :  jsf32
+  1.360 GB/s  :  1.171 GB/s  :   7533 KHz  :  jsf64
+  2.771 GB/s  :  1.198 GB/s  :  23730 KHz  :  sfc32
+  1.371 GB/s  :  0.987 GB/s  :  10376 KHz  :  sfc64
+random access RNGs:
+  1.529 GB/s  :  0.923 GB/s  :  31226 KHz  :  xsm32
+  0.651 GB/s  :  0.619 GB/s  :  18373 KHz  :  xsm64
+entropy pooling RNGs:
+  1.114 GB/s  :  0.900 GB/s  :   9494 KHz  :  arbee
+  ----- GB/s  :  0.030 GB/s  :    549 KHz  :  sha2_based_pool
+crypto / high quality RNGs:
+  0.651 GB/s  :  0.602 GB/s  :     68 KHz  :  hc256
+  0.289 GB/s  :  0.204 GB/s  :   1373 KHz  :  trivium
+  0.594 GB/s  :  0.578 GB/s  :    396 KHz  :  isaac32x256
+  0.938 GB/s  :  0.844 GB/s  :    225 KHz  :  isaac64x256
+  1.108 GB/s  :  0.852 GB/s  :    184 KHz  :  efiix32x384
+  0.854 GB/s  :  0.762 GB/s  :    161 KHz  :  efiix64x384
+  0.378 GB/s  :  0.367 GB/s  :   5955 KHz  :  chacha
+  0.166 GB/s  :  0.165 GB/s  :   2763 KHz  :  salsa
+popular RNGs:
+  0.989 GB/s  :  0.822 GB/s  :    127 KHz  :  mt19937
+16 bit variants:
+  0.658 GB/s  :  0.632 GB/s  :  19906 KHz  :  sfc16
+  0.394 GB/s  :  0.348 GB/s  :    184 KHz  :  efiix16x384
+8 bit variants:
+  0.133 GB/s  :  0.128 GB/s  :    175 KHz  :  efiix8x384
+candidate RNGs: (not recommended, but almost)
+  2.537 GB/s  :  1.152 GB/s  :  VeryFast32
+  1.463 GB/s  :  1.229 GB/s  :  VeryFast64
+  2.818 GB/s  :  1.257 GB/s  :  sfc_alternative32
+  1.475 GB/s  :  0.896 GB/s  :  sfc_alternative64
+  1.368 GB/s  :  1.283 GB/s  :  ranrot_variant32
+  1.409 GB/s  :  1.251 GB/s  :  ranrot_variant64
+16 & 8 bit candidate RNGs: (not recommended, but almost)
+  0.837 GB/s  :  0.519 GB/s  :  VeryFast16
+  0.630 GB/s  :  0.585 GB/s  :  ranrot_variant16
+  0.264 GB/s  :  0.253 GB/s  :  ranrot_variant8
+  0.658 GB/s  :  0.495 GB/s  :  sfc_alternative16
+  0.507 GB/s  :  0.210 GB/s  :  xsm16
+
+Entropy pool input speeds:
+  arbee
+    add_entropy8  :  79.8 MB/s
+    add_entropy16 : 158.2 MB/s
+    add_entropy32 : 190.8 MB/s
+    add_entropy64 : 228.2 MB/s
+    add_entropy_N : 207.3 MB/s
+  sha2_based_pool
+    add_entropy8  :  34.3 MB/s
+    add_entropy16 :  34.0 MB/s
+    add_entropy32 :  34.1 MB/s
+    add_entropy64 :  33.4 MB/s
+    add_entropy_N :  34.3 MB/s

@@ -1,0 +1,323 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\RNGs">
+      <UniqueIdentifier>{62177266-5c63-4114-8d11-eb6373c7e611}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\RNGs\other">
+      <UniqueIdentifier>{f1069cb6-98c3-4f54-a01d-41aeaa32eead}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\RNGs">
+      <UniqueIdentifier>{259690f6-e5f3-4f3c-be7d-8489e81658df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RNGs\other">
+      <UniqueIdentifier>{1d0f12fe-d72c-4125-8d64-d44837993fd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Tests">
+      <UniqueIdentifier>{1e37b1fe-6630-4f75-b223-acba4206009e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{52d2bd7b-9502-4d49-90d2-65e42f27c7d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\rand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sha2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test_batteries.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\efiix.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\hc256.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\isaac.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\jsf.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\mt19937.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\sfc.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\other\fibonacci.cpp">
+      <Filter>Source Files\RNGs\other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\other\indirection.cpp">
+      <Filter>Source Files\RNGs\other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\other\mult.cpp">
+      <Filter>Source Files\RNGs\other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\other\simple.cpp">
+      <Filter>Source Files\RNGs\other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\other\transform.cpp">
+      <Filter>Source Files\RNGs\other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\arbee.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\sha2_based_pool.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\trivium.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\xsm.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\platform_specifics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\chacha.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RNGs\salsa.cpp">
+      <Filter>Source Files\RNGs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\non_uniform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\PractRand\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\endian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand_full.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\rng_adaptors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\rng_basics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\rng_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\rng_internals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\sha2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\test_batteries.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\test_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\tests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\hc256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\isaac32x256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\isaac64x256.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\jsf32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\jsf64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\mt19937.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc16.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\sfc64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\fibonacci.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\indirection.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\mult.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\simple.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\special.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\other\transform.h">
+      <Filter>Header Files\RNGs\other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\BCFN.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\CoupGap.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\DistC6.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\FPF.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\Gap16.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\transforms.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\trivium.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\arbee.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\sha2_based_pool.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x384.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\xsm32.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\xsm64.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\all.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\chacha.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\salsa.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\BCFN_MT.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\BRank.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\FPMulti.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\Pat5.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\doc\installation.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\license.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\portability.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\PractRand.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_engines.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_entropy_pools.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_interface_variations.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_multithreading.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_usage.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_batteries.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_engines.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_overview.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_results.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_usage.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\to_do.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\versions.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\index.html">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_speed.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\RNG_parallel.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\tools.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\..\doc\Tests_performance.txt">
+      <Filter>Documentation</Filter>
+    </None>
+  </ItemGroup>
+</Project>

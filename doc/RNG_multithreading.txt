@@ -1,0 +1,114 @@
+
+========================================================================
+Use of PractRand Random Number Generators in multithreaded programs:
+========================================================================
+
+The RNGs in PractRand are thread-safe so long as the user does not try 
+to share RNG instances between threads.  While a lock could be added to 
+an RNG to allow it to be shared, that is highly undesirable from a 
+performance perspective.  The recommended solution is to have a seperate 
+RNG object for each thread.  The easiest way to do that is to tell the 
+compiler that you want the variable located in thread-local-storage.  On 
+MSVC you do that by prefixing the type name with "__declspec(thread)".  
+On GCC you do that by prefixing the type name with "__thread".  Most 
+other major C++ compiler use one of those two.  
+
+Also, when picking an RNG for a multithreaded application, it may be 
+wise to go slightly higher on statistical quality and statespace size 
+than you would for an equivalent single-threaded application.  See 
+RNG_engines.txt for lists of recommended RNGs and their quality 
+ratings.  See RNG_parallel.txt for more on when high quality RNGs are 
+needed to avoid inter-RNG correlation issues.  
+
+The next question is, how do you seed each threads RNG?  The simple 
+answer is, the auto-seeding mechanism is thread-safe, so you can just 
+initialize each RNG with the parameter PractRand::SEED_AUTO.  
+However, in order for PractRand auto-seeding to be fully thread safe, 
+some guidelines must be followed:
+1. call PractRand::initialize_PractRand() at the start of main, and 
+2. do NOT permit multithreading to occur prior to the start of main().  
+It's fine to use RNGs prior to main(), even auto-seeded RNGs... so long 
+as only one thread exists at the time.  Once initialize_PractRand() has 
+run everything else should be fully thread-safe.  
+
+The solution recommended for programs that may need more control over 
+the seeding process is:
+1. As before, pick an RNG algorithm and declare a global instance in 
+thread local storage.  However, initialize it with SEED_NONE instead 
+of SEED_AUTO.  
+2. Also declare a polymorphic entropy pool and a mutex of some kind 
+(on Win32 I use a CRITICAL_SECTION).  These should NOT be in thread 
+local storage, just ordinary global variables.  
+3. Before the RNG is used, and before any other threads are launched, 
+initialize the entropy pool with one or more calls to the add_entropy 
+methods.  The standard method is to call add_entropy_automatically(), 
+though that currently is a very poor implementation on unrecognized 
+platforms (it's fine on windows and *nix).  Then seed the RNG in the 
+main thread from the entropy pool.  
+4. Each time another thread is created, lock the mutex, use the 
+entropy pool to seed the RNG instance local to the new thread, then 
+unlock the mutex.  
+
+So, all together, the simple version looks like this on MSVC:
+  //in the .h file:
+  extern __declspec(thread) PractRand::RNGs::Polymorphic::hc256 rng;
+
+  //in the .cpp file:
+  __declspec(thread) PractRand::RNGs::Polymorphic::hc256 rng(PractRand::SEED_AUTO);
+
+Or like this on GCC:
+  //in the .h file:
+  extern __thread PractRand::RNGs::Polymorphic::hc256 rng;
+
+  //in the .cpp file:
+  __thread PractRand::RNGs::Polymorphic::hc256 rng(PractRand::SEED_AUTO);
+
+
+The complex version looks like this on MSVC:
+  //in the .h file:
+  extern __declspec(thread) PractRand::RNGs::Polymorphic::hc256 rng;
+  extern CRITICAL_SECTION thread_startup_lock;
+  extern PractRand::RNGs::Polymorphic::sha2_based_pool entropy_pool;
+
+  //in the .cpp file:
+  __declspec(thread) PractRand::RNGs::Polymorphic::hc256 rng(PractRand::SEED_AUTO);
+  CRITICAL_SECTION thread_startup_lock;
+  PractRand::RNGs::Polymorphic::sha2_based_pool entropy_pool;
+
+  //inside main(): (or elsewhere, as long as it runs prior to multithreading or RNG use)
+  InitializeCriticalSection(&thread_startup_lock);
+  entropy_pool.add_entropy_automatically();
+  //additional entropy_pool.add_entropy* calls go here if needed
+  entropy_pool.flush_buffers();
+  rng.seed(entropy_pool);
+
+  //inside per-thread initialization function:
+  EnterCriticalSection(&thread_startup_lock);
+  rng.seed(entropy_pool);
+  LeaveCriticalSection(&thread_startup_lock);
+
+
+On linux / gcc the complex version looks more like:
+  //in the .h file:
+  extern __thread PractRand::RNGs::Polymorphic::hc256 rng;
+  extern pthread_mutex_t thread_startup_lock;
+  extern PractRand::RNGs::Polymorphic::sha2_based_pool entropy_pool;
+
+  //in the .cpp file:
+  __thread PractRand::RNGs::Polymorphic::hc256 rng(PractRand::SEED_AUTO);
+  pthread_mutex_t thread_startup_lock;
+  PractRand::RNGs::Polymorphic::sha2_based_pool entropy_pool;
+
+  //inside main(): (or elsewhere, as long as it runs prior to multithreading or RNG use)
+  pthread_mutex_init( &thread_startup_lock, NULL);
+  entropy_pool.add_entropy_automatically();
+  //additional entropy_pool.add_entropy* calls go here if needed
+  entropy_pool.flush_buffers();
+  rng.seed(entropy_pool);
+
+  //inside per-thread initialization function:
+  pthread_mutex_lock( &thread_startup_lock);
+  rng.seed(entropy_pool);
+  pthread_mutex_unlock( &thread_startup_lock);
+
+

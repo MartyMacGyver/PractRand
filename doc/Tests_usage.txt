@@ -1,0 +1,110 @@
+***********************************************************************
+
+There are several different interfaces which can be used to access 
+PractRands statistical tests for pseudo-random number generators.  
+Internally each higher level interfaces is implemented using the next 
+lowest level interface.  
+
+The high level interface (and thus the simplest for a normal user) is 
+the tool RNG_test, which can be controlled from the command line.  See 
+section 1 of Tests_overview.txt and also the relevant section of 
+tools.txt for information on how to use that.  
+
+***********************************************************************
+
+The intermediate interface is that of test batteries and managers.  
+You can obtain a battery of tests by calling the PractRand libraries 
+test battery functions, which are in the namespace 
+PractRand::Tests::Batteries (see include/PractRand/test_batteries.h).  
+The test manager class is not technically part of the PractRand 
+library at this time, but you can find its code in tools/TestManager.h
+- the interface is at the top, the implementation below.  Note that 
+this is not self-contained (it requires several headers be included 
+before it) nor isolated (if you want it in a namespace you will have 
+to wrap the include statement to put it there).  A subclass that 
+extends that to let the RNG and each test run in its own thread is 
+also available in tools/MultithreadedTestManager.h
+
+The interface to the TestManager class is documented in TestManager.h, 
+but if you want an example of a program using this interface, see 
+tools/RNG_test.cpp.  If you're feeling lazy, you can just modify 
+RNG_test.cpp to include your RNG and then recompile it.  The RNG named 
+DummyRNG near the top of RNG_test.cpp was intended for that purpose.  
+
+***********************************************************************
+
+The low level interface works directly with Tests and arrays of 
+kilobyte-sized blocks of random bits.  The raw testing interface (ie 
+the baseclass from which all PractRand tests for raw datastreams are 
+derived) in: include/PractRand/tests.h
+
+You can also see the tests in action in the sample program in 
+tools/RNG_test.cpp
+Note that most of the important stuff is done in tools/TestManager.h
+
+You can see how the standard test sets are instantiated in 
+src/test_batteries.cpp
+
+The process of testing a stream of data generally goes like this:
+
+1. Call the tests constructor, with the tests parameters.  The parameters 
+can not be changed after this (unless a new test is constructed).  
+
+2. Call the tests init() method, which takes a known good polymorphic RNG 
+as a parameter.  Most tests don't actually use the the known good RNG but 
+some rare tests do and all tests in PractRand share the same API, so all 
+tests must be handed a known good RNG.  
+
+3. Create a block of memory to put the data to be tested in.  The data 
+doesn't all have to fit at once.  The block of memory should come in the 
+form of an array of the type PractRand::Tests::TestBlock.  Each TestBlock 
+is 1 kilobyte in size, and should be filled with random bits.  TestBlock 
+has a method for efficiently using a polymorphic RNG to fill it.  If you 
+wish to fill it with a different data source then you'll have to do that 
+manually.  
+
+4. Pass the block of memory to the test, using the tests test_blocks() 
+method.  The parameters are a pointer at the array of TestBlocks and the 
+number of TestBlocks in that array.  Generally no more than half a 
+gigabyte should be passed to test_blocks() in any single call, as some 
+tests malfunction when handed 1 GB or more in a single call.  
+
+[optional:] 5. Create more arrays of TestBlocks full of random bits 
+and pass them to the test with test_blocks().  However, now you are 
+supposed to have the tail end of the previous array of blocks prefixed on 
+to the begining of each new array.  The pointer at the array of blocks 
+should point to the part of the new array where the new stuff begins.  The 
+maximum number of blocks that you may be required to prefix in this way is 
+PractRand::Tests::Testbaseclass::REPEATED_BLOCKS.  
+I know this direction may be confusing.  Try looking at tools/TestManager.h
+That class encapsulates complying with those demands.  
+Like the known good RNG parameter, only a few tests actually need the 
+repeated blocks, but all test users are supposed to comply with that part of 
+the interface so that all tests get a common interface.  
+
+6. Call the tests get_result() method with an empty vector.  It will 
+fill the vector with TestResult objects, one per subtest of that test 
+that produced a usable result.  The simple way to interpret a 
+TestResult object is to refer to its name field or its get_pvalue 
+method.  They support a lot more though including metadata about 
+pvalue quality and importance, and functionality that allows it to 
+report p-values in transformed coordinates that allow higher 
+resolution on values very near one or zero.  
+
+[optional:] 7. You can repeat the above procedure starting with step 5.  
+It will remember the data it had recieved before just as if you had not 
+called get_result().  This means you can get interim results part way 
+through a longer test without spoiling the longer test.  
+
+8. Call the deinit() method of the test.  This resets the test state.  
+In some (but not all) cases this will free up most of the memory used 
+by the test.  The test parameters are not reset - they remain the same 
+until the test is destructed.  
+
+[optional:] 9. Repeat from step 2 above.  
+
+10. Destruct the test object.  At this point all memory used by the 
+test should be released.  
+
+***********************************************************************
+
