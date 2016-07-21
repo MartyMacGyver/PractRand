@@ -6,7 +6,9 @@ Based on PractRand from https://sourceforge.net/projects/pracrand/
 Building:
 It looks like MSVC >= 2012 should work for Windows. I don't plan to create binaries at this time though, and prefer to use platform-agnostic tools where possible.
 
-I've been able to build in Linux (Ubuntu) and Windows equally well (using MinGW-W64 5.3.0+ for Windows) as follows:
+I've been able to build in Linux (Ubuntu) and Windows equally well.
+
+For Windows I used the MinGW-W64 5.3.0 compiler from https://sourceforge.net/projects/mingw-w64/ (I selected the "x86_64", "posix", and "seh" options during installation). I gave this all a try with the 6.1.0 tools as well - seems to work fine too.
 
 Once you have gcc/g++ working, run the following from the command line in the root dir of this project:
 
@@ -18,3 +20,4 @@ g++ -o RNG_benchmark tools/RNG_benchmark.cpp libPractRand.a -O3 -Iinclude -pthre
 g++ -o RNG_output tools/RNG_output.cpp libPractRand.a -O3 -Iinclude -pthread -std=gnu++11
 ```
 
+A library and the expected executables are produced.
