@@ -15,9 +15,9 @@
 #include "PractRand/RNGs/all.h"
 
 namespace PractRand {
-	const char *version_str = "0.92";
+	const char *version_str = "0.94";
 	void (*error_callback)(const char *) = NULL;
-	void issue_error ( const char *msg ) {
+	void issue_error ( const char *msg) {
 		if (error_callback) error_callback(msg);
 		else {
 			if (msg) std::fprintf(stderr, "%s\n", msg);
@@ -105,7 +105,7 @@ namespace PractRand {
 			if (exp >= 0x4000) exp -= 0x8000;
 			v = (sign ? -1.0 : 1.0) * std::ldexp((double)tmp_sig, exp-64);
 		}
-		virtual Uint32 get_properties() const {return FLAG_READ_ONLY;}
+		virtual Uint32 get_properties() const {return 0;}
 	};
 	class GenericIntegerSeedingStateWalker : public StateWalkingObject {
 	public:
@@ -253,6 +253,70 @@ namespace PractRand {
 	StateWalkingObject *get_autoseeder(const void *target) {
 		return new AutoSeeder::AutoSeedingStateWalker(target);
 	}
+	namespace Internals {
+		void test_random_access(PractRand::RNGs::vRNG *rng, PractRand::RNGs::vRNG *known_good, Uint64 period_low64, Uint64 period_high64) {
+			Uint64 seed = known_good->raw64();
+			Uint8 a1, a2, a3, b1, b2, b3;
+			//basic check
+			rng->seed(seed);
+			a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
+			a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
+			rng->seed(seed);
+			rng->seek_forward(3);
+			b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
+			if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (1)");
+			//check a longer range seek
+			seed = known_good->raw64();
+			rng->seed(seed);
+			int how_far = known_good->randi(13179);
+			for (int i = 0; i < how_far; i++) rng->raw8();
+			a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
+			rng->seed(seed);
+			rng->seek_forward(how_far);
+			b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
+			if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (2)");
+			//check a more exotic pattern of seeks, with some longer still seeks
+			for (int i = 0; i < 10; i++) {
+				seed = known_good->raw64();
+				rng->seed(seed);
+				Sint64 how_far = known_good->raw64();
+				while (how_far == 0x8000000000000000ull) how_far = known_good->raw64();//we can't negate this value, so the code would fail
+				if (how_far > 0) rng->seek_forward(how_far);
+				else if (how_far < 0) rng->seek_backward(-how_far);
+				a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
+				Sint64 delta = how_far;
+				rng->seed(seed);
+				while (delta) {
+					if (delta > 0) {
+						Uint64 adjust = known_good->randli(delta + 1);
+						rng->seek_forward(adjust);
+						delta -= adjust;
+					}
+					else {
+						Uint64 adjust = known_good->randli(1 - delta);
+						rng->seek_backward(adjust);
+						delta += adjust;
+					}
+				}
+				b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
+				if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (3)");
+			}
+			//check cycle length if one was reported
+			//could add a check on prime factorization of cycle lengths, but that would be more trouble than it's worth right now
+			if (period_low64 || period_high64) {
+				rng->seed(seed);
+				a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
+				rng->seed(seed);
+				rng->seek_forward128(period_low64, period_high64);
+				b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
+				if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (4)");
+				rng->seed(seed);
+				rng->seek_backward128(period_low64, period_high64);
+				b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
+				if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (5)");
+			}
+		}
+	}
 	namespace RNGs {
 		vRNG::~vRNG() {}
 		long vRNG::serialize( char *buffer, long buffer_size ) {//returns serialized size, or zero on failure
@@ -378,67 +442,6 @@ namespace PractRand {
 			return PractRand::Internals::add_entropy_automatically(this, milliseconds);
 		}
 	}
-	static void test_random_access(PractRand::RNGs::vRNG *rng, PractRand::RNGs::vRNG *known_good, Uint64 period_low64, Uint64 period_high64) {
-		Uint64 seed = known_good->raw64();
-		Uint8 a1, a2, a3, b1, b2, b3;
-		//basic check
-		rng->seed(seed);
-		a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
-		a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
-		rng->seed(seed);
-		rng->seek_forward(3);
-		b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
-		if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (1)");
-		//check a longer range seek
-		seed = known_good->raw64();
-		rng->seed(seed);
-		int how_far = known_good->randi(13179);
-		for (int i = 0; i < how_far; i++) rng->raw8();
-		a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
-		rng->seed(seed);
-		rng->seek_forward(how_far);
-		b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
-		if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (2)");
-		//check a more exotic pattern of seeks, with some longer still seeks
-		for (int i = 0; i < 10; i++) {
-			seed = known_good->raw64();
-			rng->seed(seed);
-			Sint64 how_far = known_good->raw64();
-			if (how_far > 0) rng->seek_forward(how_far);
-			else if (how_far < 0) rng->seek_backward(-how_far);
-			a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
-			Sint64 delta = how_far;
-			rng->seed(seed);
-			while (delta) {
-				if (delta > 0) {
-					Uint64 adjust = known_good->randli(delta+1);
-					rng->seek_forward(adjust);
-					delta -= adjust;
-				}
-				else {
-					Uint64 adjust = known_good->randli(1-delta);
-					rng->seek_backward(adjust);
-					delta += adjust;
-				}
-			}
-			b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
-			if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (3)");
-		}
-		//check cycle length if one was reported
-		//could add a check on prime factorization of cycle lengths, but that would be more trouble than it's worth right now
-		if (period_low64 || period_high64) {
-			rng->seed(seed);
-			a1 = rng->raw8(); a2 = rng->raw8(); a3 = rng->raw8();
-			rng->seed(seed);
-			rng->seek_forward128(period_low64, period_high64);
-			b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
-			if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (4)");
-			rng->seed(seed);
-			rng->seek_backward128(period_low64, period_high64);
-			b1 = rng->raw8(); b2 = rng->raw8(); b3 = rng->raw8();
-			if (a1 != b1 || a2 != b2 || a3 != b3) PractRand::issue_error("PractRand::test_random_access failed (5)");
-		}
-	}
 	void self_test_PractRand() {
 		RNGs::Raw::mt19937::self_test();
 		RNGs::Raw::hc256::self_test();
@@ -449,10 +452,10 @@ namespace PractRand {
 
 		RNGs::Polymorphic::hc256 known_good(PractRand::SEED_AUTO);
 
-		{RNGs::Polymorphic::chacha rng(PractRand::SEED_NONE); test_random_access(&rng, &known_good, 0, 1ull<<36);}
-		{RNGs::Polymorphic::salsa rng(PractRand::SEED_NONE); test_random_access(&rng, &known_good, 0, 1ull<<36);}
-		{RNGs::Polymorphic::xsm32 rng(PractRand::SEED_NONE); test_random_access(&rng, &known_good, 0, 1);}
-		{RNGs::Polymorphic::xsm64 rng(PractRand::SEED_NONE); test_random_access(&rng, &known_good, 0, 0);}
+		{RNGs::Polymorphic::chacha rng(PractRand::SEED_NONE); PractRand::Internals::test_random_access(&rng, &known_good, 0, 1ull << 36); }
+		{RNGs::Polymorphic::salsa rng(PractRand::SEED_NONE); PractRand::Internals::test_random_access(&rng, &known_good, 0, 1ull << 36); }
+		{RNGs::Polymorphic::xsm32 rng(PractRand::SEED_NONE); PractRand::Internals::test_random_access(&rng, &known_good, 0, 1); }
+		{RNGs::Polymorphic::xsm64 rng(PractRand::SEED_NONE); PractRand::Internals::test_random_access(&rng, &known_good, 0, 0); }
 	}
 	bool initialize_PractRand() {
 		if (!AutoSeeder::initialized) 

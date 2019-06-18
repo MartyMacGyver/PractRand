@@ -53,6 +53,13 @@ void PractRand::RNGs::Raw::arbee::seed(Uint64 s) {
 	i = 1;
 	mix();
 }
+void PractRand::RNGs::Raw::arbee::seed(vRNG *rng) {
+	a = rng->raw64();
+	b = rng->raw64();
+	c = rng->raw64();
+	d = rng->raw64();
+	i = 13;
+}
 void PractRand::RNGs::Raw::arbee::walk_state(StateWalkingObject *walker) {
 	walker->handle(a);
 	walker->handle(b);
@@ -102,12 +109,14 @@ void PractRand::RNGs::Raw::arbee::add_entropy16(Uint16 value) {
 	d ^= value;
 	b += value;
 	raw64();
+	b += value;
 }
 void PractRand::RNGs::Raw::arbee::add_entropy32(Uint32 value) {
 	d ^= value;
 	b += value;
 	raw64();
 	raw64();
+	b += value;
 }
 void PractRand::RNGs::Raw::arbee::add_entropy64(Uint64 value) {
 	d ^= value;
@@ -116,6 +125,7 @@ void PractRand::RNGs::Raw::arbee::add_entropy64(Uint64 value) {
 	raw64();
 	raw64();
 	raw64();
+	b += value;
 }
 
 
@@ -155,6 +165,9 @@ void PractRand::RNGs::Polymorphic::arbee::add_entropy64(Uint64 value) {
 }
 void PractRand::RNGs::Polymorphic::arbee::seed(Uint64 s) {
 	implementation.seed(s);
+}
+void PractRand::RNGs::Polymorphic::arbee::seed(vRNG *rng) {
+	implementation.seed(rng);
 }
 void PractRand::RNGs::Polymorphic::arbee::seed(Uint64 s1, Uint64 s2, Uint64 s3, Uint64 s4) {
 	implementation.seed(s1, s2, s3, s4);

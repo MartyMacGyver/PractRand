@@ -30,7 +30,9 @@ chacha
 	seeding, and easily adjustable security vs speed tradeoffs.  
 	Unfortunately while seeding and random access are fast, generating 
 	random numbers with it at any particular setting ends up being slow 
-	relative to other RNGs of comparable security and quality.  
+	relative to other RNGs of comparable security and quality, at least 
+	with the PractRand implementation (which currently lacks the SIMD 
+	optimizations necesary for high-speed implementations of ChaCha).  
 efiix64x384 / efiix32x384 / efiix16x384 / efiix8x384
 	The fastest recommended RNG that qualified for a "future-proof" five  
 	star quality rating.  Also the fastest RNG to offer any degree of 
@@ -66,7 +68,7 @@ recommended RNG meets a few common requirements:
 Engine      quality speed  theory  size        notes
 sfc64       3***    5***** 1*      32 bytes    best speed
 jsf64       3***    5***** 0       32 bytes    -
-xsm64       3***    4****  1*      32 bytes    random access
+xsm64       4****   4****  1*      32 bytes    random access
 arbee       4****   4****  1*      40 bytes    entropy pooling
 trivium     5*****  1*     2**     48 bytes    crypto
 efiix64x384 5*****  3***   1*      3104 bytes  crypto
@@ -76,7 +78,7 @@ isaac64x256 5*****  2**    2**     4128 bytes  crypto
 Engine      quality speed  theory  size        notes
 sfc32       3***    5***** 0       16 bytes    best speed
 jsf32       3***    5***** 0       16 bytes    -
-xsm32       2**     4****  1*      16 bytes    random access
+xsm32       3***    4****  1*      16 bytes    random access
 chacha(8)   5*****  1*     3***    124 bytes   crypto + random access
 efiix32x384 5*****  3***   0       1552 bytes  crypto
 isaac32x256 5*****  2**    2**     2064 bytes  crypto
@@ -100,8 +102,8 @@ performance penalty, but is otherwise fine.
 * Some RNGs allow a user to skip forwards or backwards arbitrarily far in 
 the output stream efficiently.  The following RNGs support that:
 Engine          quality speed  size        word      other
-xsm32           2**     4****  16 bytes    32 bit    -
-xsm64           3***    4****  32 bytes    64 bit    -
+xsm32           3***    4****  16 bytes    32 bit    -
+xsm64           4****   4****  32 bytes    64 bit    -
 chacha(8)       5*****  1*     124 bytes   32 bit    crypto
 chacha(12)      5*****  1*     124 bytes   32 bit    crypto
 chacha(20)      5*****  0      124 bytes   32 bit    crypto
@@ -166,7 +168,7 @@ to what sort of RNG algorithms you can use in a cost-effective manner.
 RNG in hardware:
 	Trivium, sfc*, and jsf* can all be implemented with very little hardware.  
 	Of those, Trivium offers the highest quality and is the only one of those 
-	to possess any degree of cryptographic security.  
+	to offer any degree of cryptographic security.  
 
 Have some other limitation?  Let me know about it!  
 
@@ -179,8 +181,8 @@ when used in the same way in all future versions, unless bugs are discovered:
 	mt19937 (aka "The Mersenne Twister")
 	hc256 (aka "HC-256")
 	trivium
-	chacha (for even numbers of rounds only)
-	salsa (aka Salsa20)
+	chacha (aka ChaCha) (for even numbers of rounds only)
+	salsa (aka Salsa20) (for even numbers of rounds only)
 Other recommended RNGs in PractRand may vary from version to version, though 
 they should stabilize by the time PractRand approaches version 1.0.  
 
@@ -206,12 +208,15 @@ quality: (rated from 0 to 5 stars)
 		1 star - must pass 1 GB of PractRand standard
 			also, must pass TestU01 SmallCrush
 		2 star - must pass 16 GB of PractRand standard
-			also, must pass TestU01 Crush
+			also, must pass TestU01 SmallCrush
+			also, must pass gjrand mcp --standard
 		3 star - must pass 256 GB of PractRand standard
-			also, must pass TestU01 Crush & BigCrush
+			also, must pass TestU01 Crush
+			also, must pass gjrand mcp --big
 		4 star - must pass 1 TB of PractRand standard
 			also, must pass TestU01 Crush & BigCrush
-		5 star - must not have any known failures on general tests
+			also, must pass gjrand mcp --huge
+		5 star - must not have any known failures on general-purpose tests
 	Cycle Length (aka period):
 		1 star - minimum cycle length of at least 2**40 or
 			average cycle length of at least 2**45
@@ -244,11 +249,11 @@ quality: (rated from 0 to 5 stars)
 		name                  overall    empirical  cycle    states  trusted
 		jsf32                 3          5          4        3       3
 		jsf64                 3          5          5        5       3
-		sfc16                 2          5          2        2       2
+		sfc16                 2          4          2        2       2
 		sfc32                 3          5          4        3       3
 		sfc64                 3          5          5        5       3
-		xsm32                 2          5          4        3       2
-		xsm64                 3          5          5        4       3
+		xsm32                 3          4          4        3       3
+		xsm64                 4          5          5        4       4
 		arbee                 4          5          5        5       4
 		isaac32x256           5          5          5        5       5
 		isaac64x256           5          5          5        5       5
@@ -265,9 +270,8 @@ quality: (rated from 0 to 5 stars)
 		salsa (8)             4.5        5          5*       5       4.5
 		salsa (12)            5          5          5*       5       5
 		salsa (20)            5          5          5*       5       5
-		mt19937               2 **       1          5        5       3
+		mt19937               2          2          5        5       3
 		* - should be a 4, but I added an optional tweak to make it a 5
-		** - I made an exception for mt19937, strictly it should be a 1 under this scheme
 	explanations for those subscores on some PractRand RNG examples:
 		jsf32                 3          5          4        3       3
 			empirical: 5 - passes all tests so far (and it has been very well tested)
@@ -284,8 +288,8 @@ quality: (rated from 0 to 5 stars)
 			cycle: 5 - avg ~ 2**319 (min >= 2**64), future-proof
 			states: 5 - 2**320, future-proof
 			trust: 4 - better mixed & slightly larger than jsf64, fewer ways I could have missed a flaw
-		sfc16 (v4)            2          5          2        2       2
-			empirical: 5 - passed all tests
+		sfc16 (v4)            2          4          2        2       2
+			empirical: 4 - flaws detectable on EXTREMELY long tests (512 TB on PractRand std)
 			cycle: 2 - avg ~ 2**63 (min >=2**16), marginal for some uses
 			states: 2 - 2**64, marginal for some uses today
 			trust: 2 - apparent pretty decent, but I'm suspicious of it anyway
@@ -299,23 +303,22 @@ quality: (rated from 0 to 5 stars)
 			cycle: 5 - avg ~ 2**255 (min >=2**64), future-proof
 			states: 5 - 2**256, future-proof
 			trust: 3 - the extra bits over sfc32 didn't help very much
-		xsm32                 3          5          4        3       3
-			empirical: 5 - passes all tests so far
+		xsm32                 3          4          4        3       3
+			empirical: 4 - passes all output tests so far, though seeding test results are weaker
 			cycle: 4 - always 2**64, good enough for anything today but not future-proof
 			states: 3 - 2**95, marginal for some parallel uses today
 			trust: 3 - the underlying state transition is horrible, but the quality of 
-				the output hashing should be good enough to compensate
+				the output hashing should be good enough to compensate ; however, in a 
+				worst-case scenario interseed correlations could become significant
 		xsm64                 4          5          5        4       4
 			empirical: 5 - passes all tests so far
 			cycle: 5 - always 2**128, future-proof
-			states: 4 - 2**191, good enough for anything now but not completely future-proof
+			states: 4 - 2**192, good enough for anything now but not completely future-proof
 			trust: 4 - the extra bits helped significantly
-		mt19937               2 **       1          5        5       3
-			empirical: 1 - fails TestU01 Crush...
-				but I consider that to be an idiosyncracy of Crush subtest choices.  
-				Now failing PractRand standard at 256 GB... for the same reason, but I 
-				consider that more representative of how obscure the flaws revealed by 
-				large binary rank / linear complexity tests actually are.  
+		mt19937               2          2          5        5       3
+			empirical: 2 - it fails binary rank tests, linear complexity tests, 
+				and a few closely related variants.  In practice that means it 
+				fails TestU01 Crush, PractRand at 256 GB, and gjrand at --huge
 			cycle: 5 - exactly 2**19937-1, way beyond future-proof
 			states: 5 - exactly 2**19937-1, way beyond future-proof
 			trust: 3 - the hashing & size seem to be sufficient to handle its 
@@ -355,8 +358,8 @@ quality: (rated from 0 to 5 stars)
 		sfc16 (v3)            1          2          1        1       1.5
 		sfc32 (v3)            2          5          3        3       2
 		sfc64 (v3)            2          5          5        4       2
-		lcg64_32              0          1          0/4      0/2     1
-		clcg96_32             2          4          4/5      2/3     2
+		lcg(32,64)            0          1          0/4      0/2     1
+		clcg(32,96)           2          4          4/5      2/3     2
 	quality subscores for some non-PractRand RNG examples:
 		name                  overall    empirical  cycle    states  trusted
 		typical libc rand     0          0          0        0       0
@@ -388,9 +391,10 @@ quality: (rated from 0 to 5 stars)
 			cycle: 0 - adequate for very simple apps, but only barely
 			states: 0 - so small it guarantees a rapid failure
 			trust: 3.5 - it looks good... but rather funky... hard to evaluate; 
-				irrelevant anyway for performance reasons
-		KISS93                2          2.5        5        3       2
-			empirical: 2.5 - passes a lot of tests, but fails a single subtest of BigCrush and 
+				irrelevant anyway for performance reasons and because the cycle length 
+				and state size are both much too small
+		KISS93                2          3          5        3       2
+			empirical: 3 - passes a lot of tests, but fails a single subtest of BigCrush and 
 				eventually PractRand at 2TB
 			cycle: 5 - more than anyone will ever need
 			states: 3 - fair amount
@@ -482,10 +486,10 @@ minimum cycle length (aka period)
 	practice this is normally not a significant issue for decent RNGs, 
 	either due to the extreme unlikelyhood of picking a bad seed (in some 
 	cases it may be computationally infeasible to even find a bad seed 
-	deliberately, even with a distributed computing project), or due 
-	extreme unlikely of a bad seed even existing (it is believed that 
-	there are no bad seeds for hc256, even though that can't quite be 
-	proven).  
+	deliberately, even with a massive distributed computing project), or 
+	due extreme unlikely of a bad seed even existing (it is believed 
+	that there are no bad seeds for hc256, even though that can't quite 
+	be proven).  
 	See "quality" above for information on how minimum cycle length size is 
 	factored in to quality ratings.  
 
@@ -570,7 +574,7 @@ The short version is:
 		cons: some bad cycles exist
 	xsm32 / xsm64
 		pros: random access, small
-		cons: requires fast hardware multiplication
+		cons: requires fast hardware multiplication (i.e. not for low-end embedded platforms)
 	trivium
 		pros: small, some cryptographic security, extremely simple hardware implementation, high quality
 		cons: slow in software
@@ -654,8 +658,8 @@ small fast RNGs:
 			crypto security:  none
 			minimum cycle:    2**16 / 2**32 / 2**64
 			word size:        16 / 32 / 64 bit
-			size:             6 / 12 / 24 bytes
-			statespace:       2**48 / 2**96 / 2**192
+			size:             8 / 16 / 32 bytes
+			statespace:       2**64 / 2**128 / 2**256
 			multi-cyclic:     yes
 			reversible:       yes
 crypto / high quality RNGs:
@@ -686,7 +690,7 @@ crypto / high quality RNGs:
 			random access:    no
 			entropy pooling:  no
 			crypto security:  moderate
-			minimum cycle:    2**40 / 2**72 (probably no bad cycles)
+			minimum cycle:    2**40 / 2**72
 			word size:        32 / 64 bit
 			size:             2064 / 4128 bytes
 			statespace:       2**8296 / 2**16584
@@ -888,16 +892,15 @@ popular RNGs:
 		The output function is a relatively complex hashing function to mask 
 		the flaws of the underlieing twisted LFSR.  But for some reason the 
 		output hashing function used is also purely linear.  
-		It looks like it really ought to flunk my BCFN test, but it doesn't.  
-		Testing suggests that it's ability to pass that test would evaporate if it 
-		had a smaller statesize or slightly weaker output hashing, but is passes 
-		consistently, even when very very large quantities of output are used.  
-		On the other hand it fails some subtests of TestU01 Crush.  Which would 
-		suggest mt19937 is low quality... but the failures seem oddly brittle, 
-		with slight meaningless variations causing mt19937 to pass them, and I 
-		don't see those subtests flunking anything other than GFSRs, so 
-		I end up feeling that mt19937 isn't that bad, it's just that Crush puts 
-		a high priority on subtests that specifically target that family of RNGs.  
+		In PractRand it fails only the binary matrix rank test.  It looks like it 
+		really ought to flunk my BCFN test, but it doesn't.  Testing suggests that 
+		it's ability to pass that test would evaporate if it had a smaller 
+		statesize or slightly weaker output hashing, but is passes consistently, 
+		even when very very large quantities of output are used.  
+		It's test failures suggest that it should be considered low-quality... 
+		but the failures seem oddly brittle, with slight meaningless variations 
+		causing mt19937 to pass them, so I'm not entirely sure how to treat 
+		that.  
 		Technically random access is possible for this algorithm, but the cost 
 		(in memory & cycles) required is sufficiently painful that it's never 
 		done in practice.  
@@ -909,11 +912,11 @@ popular RNGs:
 		--
 		details:
 			quality subscores (scored from 0 to 5 stars):
-				empirical:     1
+				empirical:     2
 				cycle length:  5
 				statespace:    5
-				trusted:       2.5
-				overall:       2 (an exception from the normal rules for evaluating quality)
+				trusted:       2
+				overall:       2
 			speed:            medium-slow
 			operations used:  addition,bitwise,fixed shifts,simple arrays, (seeding only:)multiplication
 			full word output: yes
@@ -1018,10 +1021,13 @@ random access RNGs:
 		function ought to be too poor to be completely fixed by the output function, and 
 		like the the statespace expansion trick ought to produce excessively correlated 
 		states, but I have not managed to find any such issues in practice.  
+		Update: found interstate correlation issues and in some cases bad seeds in 
+		PractRand 0.93, changing these algorithms in PractRand 0.94+ to eliminate the 
+		problems.  
 		--
 		details:
 			quality subscores (scored from 0 to 5 stars):
-				empirical:     5 / 5?
+				empirical:     5 / 5
 				cycle length:  3 / 5
 				statespace:    3 / 4
 				trusted:       3 / 4
@@ -1032,11 +1038,12 @@ random access RNGs:
 			buffered:         no
 			random access:    yes
 			entropy pooling:  no
-			crypto security:  none
+			crypto security:  very low (the output function is sufficient to 
+				obscure the internal state from casual efforts)
 			minimum cycle:    2**64 / 2**128
 			word size:        32 bit / 64 bit
 			size:             16 bytes / 32 bytes
-			statespace:       2**95 / 2**191
+			statespace:       2**96 / 2**192
 			multi-cyclic:     yes
 			reversible:       yes
 	chacha8 / chacha12 / chacha20

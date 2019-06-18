@@ -42,32 +42,38 @@ namespace PractRand {
 					}
 				}
 
-				Uint8 rc4_weakened::raw8() {
+				Uint8 rc4_weakenedA::raw8() {
 					b += arr[a];
 					Uint8 tmp = arr[b];
 					arr[b] = arr[a];
 					arr[a++] = tmp;
 					return tmp;
 				}
-				std::string rc4_weakened::get_name() const {return "rc4_weakened";}
-				void rc4_weakened::walk_state(StateWalkingObject *walker) {
-					walker->handle(a);
-					walker->handle(b);
-					if (walker->is_clumsy() && !walker->is_read_only()) {
-						Uint64 seed;
-						walker->handle(seed);
-						PractRand::RNGs::Raw::arbee seeder(seed);
-						seeder.walk_state(walker);
-						for (int i = 0; i < 256; i++) arr[i] = i;
-						for (int i = 0; i < 256; i++) {
-							Uint8 ai = i, bi = seeder.raw8();
-							Uint8 tmp = arr[ai]; arr[ai] = arr[bi]; arr[bi] = tmp;
-						}
-					}
-					else {
-						for (int i = 0; i < 256; i++) walker->handle(arr[i]);
-					}
+				std::string rc4_weakenedA::get_name() const {return "rc4_weakenedA";}
+				Uint8 rc4_weakenedB::raw8() {
+					b += arr[a];
+					Uint8 tmp = arr[b];
+					arr[b] = arr[a];
+					arr[a++] = tmp;
+					return tmp + arr[b];
 				}
+				std::string rc4_weakenedB::get_name() const { return "rc4_weakenedB"; }
+				Uint8 rc4_weakenedC::raw8() {
+					b += arr[a];
+					Uint8 tmp = arr[b];
+					arr[b] = arr[a];
+					arr[a++] = tmp;
+					return arr[tmp];
+				}
+				std::string rc4_weakenedC::get_name() const { return "rc4_weakenedC"; }
+				Uint8 rc4_weakenedD::raw8() {
+					b += arr[a];
+					Uint8 tmp = arr[b];
+					arr[b] = arr[a];
+					arr[a++] = tmp;
+					return arr[tmp] + b;
+				}
+				std::string rc4_weakenedD::get_name() const { return "rc4_weakenedD"; }
 
 				Uint8 ibaa8::raw8() {
 					if (left) {
@@ -330,7 +336,7 @@ namespace PractRand {
 
 
 				Uint8 efiix8_varqual::raw8() {
-					/*Uint8 iterated = iteration_table  [i & iteration_table_size_m1];
+					Uint8 iterated = iteration_table  [i & iteration_table_size_m1];
 					Uint8 indirect = indirection_table[c & indirection_table_size_m1];
 					indirection_table[c & indirection_table_size_m1] = iterated + a;
 					iteration_table  [i & iteration_table_size_m1  ] = indirect;
@@ -354,7 +360,7 @@ namespace PractRand {
 					
 					//"^b" - 1+1: 38, 1+2: >36
 					//"^a" - 1+1: 38
-					Uint8 iterated = iteration_table  [i & iteration_table_size_m1  ] ^ a;
+					/*Uint8 iterated = iteration_table  [i & iteration_table_size_m1  ] ^ a;
 					Uint8 indirect = indirection_table[c & indirection_table_size_m1] + i;
 					indirection_table[c & indirection_table_size_m1] = iterated;
 					iteration_table  [i & iteration_table_size_m1  ] = indirect;
@@ -406,7 +412,7 @@ namespace PractRand {
 					return (value << bits) | (value >> (4-bits));
 				}
 				Uint8 efiix4_varqual::raw4() {
-					/*Uint8 iterated = iteration_table  [i & iteration_table_size_m1];
+					Uint8 iterated = iteration_table  [i & iteration_table_size_m1];
 					Uint8 indirect = indirection_table[c & indirection_table_size_m1];
 					indirection_table[c & indirection_table_size_m1] = iterated + a;
 					iteration_table  [i & iteration_table_size_m1  ] = indirect;
@@ -449,7 +455,7 @@ namespace PractRand {
 						4		32/32	31/33	33/36	36/37
 						8		37/42?
 					*/
-					Uint8 iterated = iteration_table  [i & iteration_table_size_m1  ] ^ a;
+					/*Uint8 iterated = iteration_table  [i & iteration_table_size_m1  ] ^ a;
 					Uint8 indirect = indirection_table[c & indirection_table_size_m1] + i;
 					indirection_table[c & indirection_table_size_m1] = iterated;
 					iteration_table  [i & iteration_table_size_m1  ] = indirect;
@@ -497,6 +503,217 @@ namespace PractRand {
 					delete[] iteration_table;
 					delete[] indirection_table;
 				}
+
+				genindA::genindA(int size_L2) {
+					if (size_L2 > 16) issue_error("genindA - size too large");
+					if (size_L2 < 0) issue_error("genindA - size too small");
+					shift = size_L2;
+					table_size_mask = (1 << shift) - 1;
+					table = new Uint16[table_size_mask + 1];
+				}
+				genindA::~genindA() {
+					delete[] table;
+				}
+				Uint16 genindA::raw16() {
+					int i1 = a >> (16 - shift);
+					int i2 = i & table_size_mask;
+					Uint16 o = table[i2];
+					table[i2] = a;
+					a += table[i1] + o + i++;
+					return o;
+				}
+				void genindA::walk_state(StateWalkingObject *walker) {
+					walker->handle(a);
+					walker->handle(i);
+					for (int x = 0; x <= table_size_mask; x++) walker->handle(table[x]);
+				}
+				std::string genindA::get_name() const {
+					std::stringstream buf;
+					buf << "genindA(" << shift << ")";
+					return buf.str();
+				}
+				genindB::genindB(int size_L2) {
+					if (size_L2 > 16) issue_error("genindB - size too large");
+					if (size_L2 < 0) issue_error("genindB - size too small");
+					shift = size_L2;
+					table_size_mask = (1 << shift) - 1;
+					table = new Uint16[table_size_mask + 1];
+				}
+				genindB::~genindB() {
+					delete[] table;
+				}
+				Uint16 genindB::raw16() {
+					int i1 = a >> (16 - shift);
+					int i2 = i++ & table_size_mask;
+					Uint16 &t1 = table[i1];
+					Uint16 &t2 = table[i2];
+					Uint16 old = a ^ i;
+					a ^= t2 + b;
+					b = rotate16(b, 5) + old;
+					t1 = t2;
+					t2 = old;
+					return a;
+				}
+				void genindB::walk_state(StateWalkingObject *walker) {
+					walker->handle(a);
+					walker->handle(b);
+					walker->handle(i);
+					//for (int x = 0; x < (1 << TABLE_SIZE_L2); x++) walker->handle(table[x]);
+					for (int x = 0; x <= table_size_mask; x++) walker->handle(table[x]);
+				}
+				std::string genindB::get_name() const {
+					std::stringstream buf;
+					buf << "genindB(" << shift << ")";
+					return buf.str();
+				}
+				genindC::~genindC() {
+					delete[] table;
+				}
+				genindC::genindC(int size_L2) {
+					if (size_L2 > 16) issue_error("genindC - size too large");
+					if (size_L2 < 1) issue_error("genindC - size too small");
+					table_size_L2 = size_L2;
+					table = new Uint16[1 << table_size_L2];
+					left = -1;
+				}
+				Uint16 genindC::refill() {
+					int size = 1 << table_size_L2;
+					int half_size = 1 << (table_size_L2 - 1);
+					int mask = half_size - 1;
+					Uint16 *table2 = table + half_size;
+					for (int i = 0; i < half_size; i++) {
+						Uint16 o = table[i];
+						table[i] += a;
+						a = table2[o & mask] + rotate16(a, 5);
+					}
+					for (int i = 0; i < half_size; i++) {
+						Uint16 o = table2[i];
+						table2[i] += a;
+						a = table[o & mask] + rotate16(a, 5);
+					}
+					left = (1 << table_size_L2) - 1;
+					return table[left--];
+				}
+				void genindC::walk_state(StateWalkingObject *walker) {
+					int size = 1 << table_size_L2;
+					walker->handle(left);
+					if (left >= size) left = -1;
+					walker->handle(a);
+					for (int x = 0; x < size ; x++) walker->handle(table[x]);
+				}
+				std::string genindC::get_name() const {
+					std::stringstream buf;
+					buf << "genindC(" << table_size_L2 << ")";
+					return buf.str();
+				}
+				genindD::~genindD() {
+					delete[] table;
+				}
+				genindD::genindD(int size_L2) {
+					if (size_L2 > 16) issue_error("genindD - size too large");
+					if (size_L2 < 0) issue_error("genindD - size too small");
+					table_size_L2 = size_L2;
+					table = new Uint16[1ull << table_size_L2];
+					mask = (1ull << table_size_L2) - 1;
+				}
+				Uint16 genindD::raw16() {
+					int i1 = i++ & mask;
+					int i2 = a & mask;
+					Uint16 tmp = table[i1] ^ a;
+					a += tmp;
+					table[i1] = table[i2];
+					table[i2] = tmp;
+					a = rotate(a, 5);
+					return tmp;
+				}
+				void genindD::walk_state(StateWalkingObject *walker) {
+					walker->handle(i);
+					walker->handle(a);
+					for (int i = 0; i <= mask; i++) walker->handle(table[i]);
+				}
+				std::string genindD::get_name() const {
+					std::stringstream buf;
+					buf << "genindD(" << table_size_L2 << ")";
+					return buf.str();
+				}
+
+				genindE::~genindE() {
+					delete[] table1;
+					delete[] table2;
+				}
+				genindE::genindE(int size_L2) {
+					table_size_L2 = size_L2;
+					if (size_L2 < 1) issue_error("genindE - size too small");
+					if (size_L2 > 16) issue_error("genindE - size too large");
+					table1 = new Uint16[1ull << (table_size_L2)];
+					table2 = new Uint16[1ull << (table_size_L2)];
+					mask = (1ull << table_size_L2) - 1;
+				}
+				Uint16 genindE::raw16() {
+					int X = i++;
+					int Y = a & mask;
+					Uint16 A = rotate(table2[X], 3) + rotate(table2[Y], 0);
+					Uint16 B = rotate(table1[X], 0) ^ rotate(a, 2);
+					table1[X] = a;
+					a = B + A;
+					if (i > mask) {
+						i = 0;
+						Uint16 *tmp = table1;
+						table1 = table2;
+						table2 = tmp;
+					}
+					return B;
+				}
+				void genindE::walk_state(StateWalkingObject *walker) {
+					walker->handle(i);
+					i &= mask;
+					walker->handle(a);
+					for (int i = 0; i <= mask; i++) walker->handle(table1[i]);
+					for (int i = 0; i <= mask; i++) walker->handle(table2[i]);
+				}
+				std::string genindE::get_name() const {
+					std::stringstream buf;
+					buf << "genindE(" << table_size_L2 << ")";
+					return buf.str();
+				}
+
+				genindF::~genindF() {
+					delete[] table1;
+					delete[] table2;
+				}
+				genindF::genindF(int size_L2) {
+					table_size_L2 = size_L2;
+					if (size_L2 < 1) issue_error("genindF - size too small");
+					if (size_L2 > 16) issue_error("genindF - size too large");
+					table1 = new Uint16[1ull << (table_size_L2)];
+					table2 = new Uint16[1ull << (table_size_L2)];
+					mask = (1ull << (table_size_L2)) - 1;
+				}
+				Uint16 genindF::raw16() {
+					a ^= table2[i++ & mask];
+					int i1 = a & mask;
+					a = rotate16(a, 11);
+					Uint16 o1 = table1[i1];
+					int i2 = o1 & mask;
+					Uint16 o2 = table2[i2];
+					table1[i1] = o2;
+					table2[i2] = o1 + a;
+					a += o1 ^ o2;
+					return a;
+				}
+				void genindF::walk_state(StateWalkingObject *walker) {
+					walker->handle(i);
+					i &= mask;
+					walker->handle(a);
+					for (int i = 0; i <= mask; i++) walker->handle(table1[i]);
+					for (int i = 0; i <= mask; i++) walker->handle(table2[i]);
+				}
+				std::string genindF::get_name() const {
+					std::stringstream buf;
+					buf << "genindF(" << table_size_L2 << ")";
+					return buf.str();
+				}
+
 			}//NotRecommended
 		}//Polymorphic
 	}//RNGs

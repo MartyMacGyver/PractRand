@@ -25,5 +25,15 @@ namespace PractRand {
 			Uint32 last[65536];
 			int warmup;
 		};
+		class Rep16 : public TestBaseclass {
+		public:
+			virtual void init(PractRand::RNGs::vRNG *known_good);
+			virtual std::string get_name() const;
+			virtual void get_results(std::vector<TestResult> &results);
+
+			virtual void test_blocks(TestBlock *data, int numblocks);
+		protected:
+			FixedSizeCount<Uint8, 65536 * 2> counts;
+		};
 	}//Tests
 }//PractRand

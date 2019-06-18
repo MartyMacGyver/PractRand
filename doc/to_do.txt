@@ -1,20 +1,33 @@
-post-0.92:
+for 0.94:
+	mod3n - ready, though uncalibrated
+	TMFn - ready, though uncalibrated
+	BirthdaySystemagic - ready (probably, but weird performance anomaly could use investigation)
+	rarns16/32/64 - NOT READY
+	RNG Sets - ready-ish
+	xsm32/64 - ready
+post-0.94:
 	high priority items
-		create famework for testing tests & batteries
-		revise seeding for all recommended RNGs - reduce seedspace relative to statespace to allow probabilistic proof that all seeds are good
-		new tests, finish &| calibrate some of them - BCFN variants, FPMulti, ???
-		improve calibration for long DC6:9x1-1 tests
-			may need to make find_test_distribution multithreaded; would take a month or more otherwise
-		finish changes & validation for xsm64 & xsm32
+		calibrate new tests
+		review seeding for all recommended RNGs
+			in some cases, reduce seedspace relative to statespace to allow probabilistic proof that all seeds are good
 		finish changes & validation for efiix
 		add regression tests for more RNGs
 		move inter-test weightings in to the batteries, not the tests themselves
-		some tests have changed ; is recalibration necessary?
-		finish adjusting RNG_from_name.h to allow it to source metadata & descriptions of RNGs
+			currently there are problems with all foldings being weighted equally due to this
 	considering
+		adjust RNG_from_name.h to allow it to source metadata & descriptions of RNGs
+		improve calibration for long DC6:9x1-1 tests
+		add new PRNG targetted soley at speed?
+		new tests, finish &| calibrate some of them - BCFN variants, FPMulti, ???
+			NearSeq - needs more work
+			DistFreq4 - consider 3 windows instead of 2, alternate sweep schemes
+			FPMulti - needs more work (birthday spacings?)
+			Birthday Spacings tests - mostly ready, but weird performance anomaly in BirthdaySystematic could use investigation
+		some tests have changed ; is recalibration necessary?
+		may need to make find_test_distribution multithreaded; some tests would take a month or more otherwise
+		create famework for testing tests & batteries
 		add some avalanche testing code
 		changes to seeding functions - less non-native integer size math, less use of other PRNGs
-		add smaller parameterizations of efiix (or just different)
 		FPF "small footprint, short stride" path is still doing the stupid bit reversal thing, fix that sometime (is this fixed now?)
 	add more self-tests, regression tests, etc
 		checks that serialization works correctly
@@ -50,9 +63,6 @@ post-0.92:
 				publish?
 			BCN_generic
 				worth more investigation
-			BRank
-				definitely fix abstraction layer violations
-				maybe don't do multiple matrices on non-power-of-2 sizes?
 			mix of tests to switch between on a single stream
 				BRank is an obvious candidate since it doesn't scale well and take too much time per data relative to other tests
 				FPF is another possible candidate, since it doesn't need much continuity and is a bit slow relative to others
@@ -67,7 +77,7 @@ post-0.92:
 			allow a single test to be multithreaded?
 				a bit nasty to code, and the interface might be nasty too, but it is quite doable
 	tools
-		add an adaptor to produce a polymorphic RNG from a raw RNG automatically
+		add an adaptor to produce a polymorphic RNG from a raw RNG automatically?
 			(to simplify users sticking their own RNG in to the test program at full performance)
 		possibly move TestManager class in to library?
 	choices in library to be reconsidered:

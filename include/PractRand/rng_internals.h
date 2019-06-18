@@ -99,10 +99,9 @@ namespace PractRand {
 		static inline Uint64 rotate(Uint64 value, int bits) {return rotate64(value, bits);}
 		//non_uniform.cpp
 		double generate_gaussian_fast(Uint64 raw64);//fast CDF-based hybrid method
-		double generate_gaussian_high_quality(Uint64 raw192[3]);//slow PDF-based ziggurat method
+		//double generate_gaussian_high_quality(Uint64 raw192[3]);//slow PDF-based ziggurat method
 		//rand.cpp
-		/*void test_seeking64( PractRand::RNGs::vRNG *rng, Uint64 period_minus_1 );
-		void test_seeking128( PractRand::RNGs::vRNG *rng, Uint64 period_minus_1_low, Uint64 period_minus_1_high );*/
+		void test_random_access(PractRand::RNGs::vRNG *rng, PractRand::RNGs::vRNG *known_good, Uint64 period_low64, Uint64 period_high64);
 		//platform_specific.cpp
 		bool add_entropy_automatically( PractRand::RNGs::vRNG *entropy_pool, int milliseconds=0 );
 		Uint64 issue_unique_identifier();

@@ -42,17 +42,33 @@ namespace Threading {
 namespace Threading {
 	//compile time assert that Lock is big enough:
 	typedef char compile_time_assertion[(sizeof(Lock) >= sizeof(CRITICAL_SECTION)) ? 1 : -1];
+	static void _issue_win32_error(int number, const char *msg) {
+		enum { BUFSIZE = 256 };
+		TCHAR buf[BUFSIZE];
+		FormatMessage(
+			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+			number,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),// languageid
+			buf, BUFSIZE, NULL
+		);
+		std::fprintf(stderr, "GetLastError() = %d: %s", number, buf);
+		issue_error(msg);
+	}
 	void sleep(int milliseconds) {
 		::Sleep(milliseconds);
 	}
 	void create_thread( unsigned long (THREADFUNC_CALLING_CONVENTION *func)(void*), void *param ) {
 	//void create_thread( THREADFUNC_RETURN_TYPE (*func)(THREADFUNC_CALLING_CONVENTION *), void *param ) {
 		HANDLE h = CreateThread( NULL, 32768, func, param, 0, NULL);
+		//if (!h) issue_error("create_thread: CreateThread faild", )
 		if (!h) {
 			std::fprintf(stderr, "failed to create thread");
 			std::exit(1);
 		}
-		CloseHandle(h);
+		if (!CloseHandle(h)) {
+			std::fprintf(stderr, "failed to close thread handle");
+			std::exit(1);
+		}
 	}
 	Lock::Lock() {
 		InitializeCriticalSectionAndSpinCount((CRITICAL_SECTION*)&impl_data, 2000);
@@ -85,6 +101,10 @@ namespace Threading {
 namespace Threading {
 	//compile time assert that Lock is big enough:
 	typedef char compile_time_assertion[(sizeof(Lock) >= sizeof(pthread_mutex_t)) ? 1 : -1];
+	static void _issue_pthread_error(int number, const char *msg) {
+		std::fprintf(stderr, "errno = %d: %s", number, std::strerror(number));
+		issue_error(msg);
+	}
 	void sleep(int milliseconds) {
 		if (milliseconds > 1000) {
 			::sleep(milliseconds / 1000);
@@ -94,23 +114,37 @@ namespace Threading {
 	}
 	void create_thread( THREADFUNC_RETURN_TYPE (THREADFUNC_CALLING_CONVENTION *func)(void*), void *param ) {
 		pthread_t thread;
-		pthread_create(&thread, NULL, func, param);
+		if (pthread_create(&thread, NULL, func, param)) {
+			_issue_pthread_error(errno, "Threading::create_thread: pthread_create failed");
+
+		}
+		if (pthread_detach(thread)) {
+			_issue_pthread_error(errno, "Threading::create_thread: pthread_create failed");
+		}
 	}
 	Lock::Lock() {
 		//InitializeCriticalSectionAndSpinCount((CRITICAL_SECTION*)&impl_data, 2000);
-		pthread_mutex_init( (pthread_mutex_t *)&impl_data, NULL );
+		if (pthread_mutex_init( (pthread_mutex_t *)&impl_data, NULL )) {
+			_issue_pthread_error(errno, "Lock constructor: pthread_mutex_init failed");
+		}
 	}
 	Lock::~Lock() {
 		//DeleteCriticalSection((CRITICAL_SECTION*)&impl_data);
-		pthread_mutex_destroy( (pthread_mutex_t *)&impl_data );
+		if (pthread_mutex_destroy( (pthread_mutex_t *)&impl_data )) {
+			_issue_pthread_error(errno, "Lock destructor: pthread_mutex_destroy failed");
+		}
 	}
 	void Lock::enter() {
 		//EnterCriticalSection((CRITICAL_SECTION*)&impl_data);
-		pthread_mutex_lock( (pthread_mutex_t *)&impl_data );
+		if (pthread_mutex_lock( (pthread_mutex_t *)&impl_data )) {
+			_issue_pthread_error(errno, "Lock::enter: pthread_mutex_lock failed");
+		}
 	}
 	void Lock::leave() {
 		//LeaveCriticalSection((CRITICAL_SECTION*)&impl_data);
-		pthread_mutex_unlock( (pthread_mutex_t *)&impl_data );
+		if (pthread_mutex_unlock( (pthread_mutex_t *)&impl_data )) {
+			_issue_pthread_error(errno, "Lock::leave: pthread_mutex_unlock failed");
+		}
 	}
 	bool Lock::try_enter() {
 		//return TryEnterCriticalSection((CRITICAL_SECTION*)&impl_data) ? true : false;

@@ -39,29 +39,36 @@ void PractRand::RNGs::Raw::jsf32::seed(Uint64 s) {//LOCKED, do not change
 	b = Uint32(s);
 	c = b ^ Uint32(s >> 32);
 	d = b;
-	for (int i = 0; i < 20; i++) raw32();
+	for (int i = 0; i < 20; i++) raw32();//20
 	/*
-		number of outputs skipped vs number of seeds needed to detect bias via standard battery:
-		2: 2**11
-		3: 2**14
-		4: 2**19
-		5: 2**24
-		6: > 2**33
+		number of outputs skipped vs number of seeds needed to detect bias via expanded battery w/ extra folding:
+		2: 2**10
+		3: 2**12
+		4: 2**18
+		5: 2**23
+		6: 2**35
+		7: >= 2**42
 		conclusion:
 			The 20 outputs skipped by the standard algorithm are more than sufficient.  
-			10 should be more than enough for most purposes, 
-			16 should be enough for any purpose that could possibly be satisfied by seeding from a 64 bit integer.  
+			8 should be enough for most purposes, 
+			12 should be enough for any purpose that could possibly be satisfied by seeding from a 64 bit integer.  
+			(this PRNG won't be secure no matter how good seeding is, so the best we can do is 2**64 seeds producing uncorrelated results)
 	*/
 }
 void PractRand::RNGs::Raw::jsf32::seed_fast(Uint64 s) {
-	a = 0xf1ea5eed;
+	a = 0xf1ea5eed ^ Uint32(s >> 32);
 	b = Uint32(s);
-	c = Uint32(s >> 32);
-	d = b ^ c;
-	for (int i = 0; i < 5; i++) raw32();
+	c = b ^ Uint32(s >> 32);
+	d = b;
+	for (int i = 0; i < 8; i++) raw32();
+}
+void PractRand::RNGs::Raw::jsf32::seed(vRNG *seeder_rng) {//custom seeding
+	a = b = seeder_rng->raw32();
+	c = d = seeder_rng->raw32();
+	for (int i = 0; i < 4; i++) raw32();//4
 }
 void PractRand::RNGs::Raw::jsf32::seed(Uint32 seed1, Uint32 seed2, Uint32 seed3, Uint32 seed4) {//custom seeding
-	//LOCKED, do not change
+		//LOCKED, do not change
 	//exception to the locked status - 
 	//   when more bad cycles are found, more code might be added to prohibit them
 	//exception: changed in 0.87 to to reduce correlation between similar seeds
@@ -77,7 +84,7 @@ void PractRand::RNGs::Raw::jsf32::seed(Uint32 seed1, Uint32 seed2, Uint32 seed3,
 		if (a==0x5591F2E3 && b==0x69EBA6CD && c==0x2A171E3D && d==0x3FD48890 ) d++;
 		if (a==0x47CB8D56 && b==0xAE9B35A7 && c==0x5C78F4A8 && d==0x522240FF ) d++;
 	}
-	for (int i = 0; i < 12; i++) raw32();
+	for (int i = 0; i < 12; i++) raw32();//12
 }
 void PractRand::RNGs::Raw::jsf32::walk_state(StateWalkingObject *walker) {
 	//LOCKED, do not change
@@ -115,7 +122,7 @@ void PractRand::RNGs::Raw::jsf64::seed(Uint64 s) {
 void PractRand::RNGs::Raw::jsf64::seed_fast(Uint64 s) {
 	a = 0xf1ea5eed;
 	b = c = d = s;
-	for (int i = 0; i < 5; i++) raw64();
+	for (int i = 0; i < 8; i++) raw64();
 }
 void PractRand::RNGs::Raw::jsf64::walk_state(StateWalkingObject *walker) {
 	//LOCKED, do not change
@@ -125,7 +132,7 @@ void PractRand::RNGs::Raw::jsf64::walk_state(StateWalkingObject *walker) {
 	walker->handle(c);
 	walker->handle(d);
 	if (!(a|b) && !(c|d)) d = 1;
-	for (int i = 0; i < 12; i++) raw64();
+	for (int i = 0; i < 12; i++) raw64();//12
 }
 
 

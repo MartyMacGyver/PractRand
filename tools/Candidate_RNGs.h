@@ -94,6 +94,20 @@ public:\
 	void walk_state(StateWalkingObject *walker) {implementation.walk_state(walker);}\
 	std::string get_name() const {return std::string(#rng) + #bits ;}\
 };
+#define SEEDED_POLYMORPHIC_CANDIDATE(rng, bits) \
+class polymorphic_ ## rng ## bits : public PractRand::RNGs::vRNG ## bits {\
+public:\
+	typedef raw_ ## rng ## bits ImplementationType;\
+	enum {OUTPUT_BITS = ImplementationType ::OUTPUT_BITS,FLAGS = ImplementationType ::FLAGS};\
+	ImplementationType implementation; \
+	polymorphic_ ## rng ## bits(PractRand::SEED_NONE_TYPE) {}\
+	polymorphic_ ## rng ## bits (PractRand::SEED_AUTO_TYPE) {autoseed();}\
+	polymorphic_ ## rng ## bits (Uint64 seed_value) {implementation.seed(seed_value);}\
+	void seed(Uint64 seed_value) {implementation.seed(seed_value);}\
+	Uint ## bits raw ## bits () {return implementation.raw ## bits ();}\
+	void walk_state(StateWalkingObject *walker) {implementation.walk_state(walker);}\
+	std::string get_name() const {return std::string(#rng) + #bits ;}\
+};
 
 template<typename Word, int LAG1, int LAG2, int SHIFT1, int SHIFT2, int SHIFT3>
 class _RanrotVariant {
@@ -169,6 +183,11 @@ public:
 	Word _raw_native() {
 		Word old;
 		const Word K = Word(0x92ec64765925a395ull);
+		//now based upon alearx:
+		a ^= rotate(b + c, LSHIFT);
+		b ^= rotate(c + (c << 3), RSHIFT);
+		c ^= a + (a << 3); c = rotate(c, ROTATE);
+		return a;//*/
 		//good speed, 16 bit version fails @ 32 GB, 32 bit version passed 8 TB
 		/*old = a + b;
 		a = b ^ (b >> RSHIFT);
@@ -176,7 +195,7 @@ public:
 		c = old + rotate(c,ROTATE);// RSHIFT,LSHIFT,ROTATE : 7,3,9 @ 32 bit
 		return old;//*/
 		//best quality: 16 bit fails @ 1 TB, but not as fast ;; switching "a += b ^ c;" for "a ^= b + c;" increases that to 2 TB
-		old = a + (a << LSHIFT);
+		/*old = a + (a << LSHIFT);
 		a += b ^ c;
 		b = c ^ (c >> RSHIFT);
 		c = old + rotate(c,ROTATE);
@@ -234,7 +253,7 @@ public:
 	enum {
 		OUTPUT_TYPE = PractRand::RNGs::OUTPUT_TYPES::NORMAL_1,
 		OUTPUT_BITS = 8 * sizeof(Word),
-		FLAGS = PractRand::RNGs::FLAG::NEEDS_GENERIC_SEEDING
+		FLAGS = 0//PractRand::RNGs::FLAG::NEEDS_GENERIC_SEEDING
 	};
 	Word a, b, c, d, counter, counter2;
 	static Word rotate(Word value, int bits) {return (value << bits) | (value >> (8*sizeof(value)-bits));}
@@ -306,15 +325,119 @@ public:
 		c = (c + (c << 7)) ^ rotate(c,11);
 		return a^b^c;*/
 
+		//VERY good speed, 16 bit version failed @ 256 GB (2 GB w/o counter), 32 bit @ ?
+		/*enum { SHIFT = (OUTPUT_BITS == 64) ? 43 : ((OUTPUT_BITS == 32) ? 23 : ((OUTPUT_BITS == 16) ? 11 : -1)) };//43, 11, 9
 		a += b; b -= c;
 		c += a; a ^= counter++;
-		c = rotate(c, 43 % OUTPUT_BITS);
-		return a;
+		c = rotate(c, SHIFT);//*/
+		//w/ counter	32:29->24, 28->37?, 27->36		16:14->22, 13->23, 12->32, 11->37, 10->37, 9->30, 8->19, 7->30, 6->38, 5->38, 4->29, 3->19, 2->18
+		//w/o counter	32:29->  , 28->  , 27->			16:14->17, 13->19, 12->26, 11->30, 10->31, 9->31, 8->17, 7->31, 6->31, 5->31, 4->30, 3->19, 2->17
 
-		//a = (a << 6) - a;
-		//a ^= Word(0x123456789abcdef);
-		//b += a;
-		//return a ^ rotate(b, 21 % OUTPUT_BITS);
+		//xoroshiro128+:
+		/*  //
+		Word result = a + b;
+		b ^= a;
+		a = rotate(a, 55 % OUTPUT_BITS) ^ b ^ (b << (14 % OUTPUT_BITS));
+		b = rotate(b, 36 % OUTPUT_BITS);
+		return result;//*/
+
+		//??? speed, 16 bit version failed @ ? GB (16 GB w/o counter), 32 bit @ ?
+		enum { _SHIFT1 = (OUTPUT_BITS == 64) ? 43 : ((OUTPUT_BITS == 32) ? 23 : ((OUTPUT_BITS == 16) ? 10 : -1)) };
+		enum { _SHIFT2 = (OUTPUT_BITS == 64) ? 25 : ((OUTPUT_BITS == 32) ?  9 : ((OUTPUT_BITS == 16) ?  7 : -1)) };
+
+
+		//a += b; b -= c;
+		//c += a; a ^= counter++;
+		//b = rotate(b, _SHIFT1);//*/
+		//c = rotate(c, _SHIFT2);//*/
+		//w/ counter	32:29->24, 28->37?, 27->36		16:14->22, 13->23, 12->32, 11->37, 10->37, 9->30, 8->19, 7->30, 6->38, 5->38, 4->29, 3->19, 2->18
+		//w/o counter	32:29->  , 28->  , 27->			16:14->17, 13->19, 12->26, 11->30, 10->31, 9->31, 8->17, 7->31, 6->31, 5->31, 4->30, 3->19, 2->17
+
+		//VERY good speed, 16 bit version failed @ 16 TB (1 TB w/o counter), 32 bit @ > 4 TB w/o counter ; 16 bit version passes gjrand --huge (--??? w/o counter
+		/*
+		enum { SH1 = (OUTPUT_BITS == 64) ? 48 : ((OUTPUT_BITS == 32) ? 14 : ((OUTPUT_BITS == 16) ? 9 : ((OUTPUT_BITS == 8) ? 5 : -1))) };
+		enum { SH2 = (OUTPUT_BITS == 64) ?  3 : ((OUTPUT_BITS == 32) ?  3 : ((OUTPUT_BITS == 16) ? 3 : ((OUTPUT_BITS == 8) ? 2 : -1))) };// using LEA on x86
+		a += b; b -= c;
+		c += a; //a ^= counter++;
+		c = rotate(c, SH1);//cb  with count: ?, 14, 9, ?  ; w/o count: 16, 8, 9, ?
+		b += (b << SH2);//ba*/
+		//						1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32
+		//		16 nocount				19	37	39	40	39	32	39	38	34	34	19			40,39,39,39,38,37,34
+		//		16B nocount				19	34	37	37	36	36	41	41	38	34	19			41,41,38,37,37,36,36
+		//		16 w/ count		17	18	19	40	42	41	42	43	44	44	44	41	23	22	18
+		//								0	3	3	1	3	11	5	6	10	7	4
+		//								38	77	81	81	81	75	83	82	78	75	42
+		//		16:6					18	13	18	20	22	17	24	21	20	19	14
+		//		16:7					20	21	24	23	26	20	26	23	21	20	16				+3.1
+		//		16:8					27	24	29	34	31	30	31	29	30	30	22				+7.0
+		//		16:9					32	31	33	38	37	37	39	31	37	38	26				+5.6
+		//		16:6+7+8				65	58	71	77	79	67	81	73	71	69	52
+		//		16:7+8+9				79	76	86	95	94	87	96	83	88	88	64
+		//
+		//		32 nocount				31	34	36	36	38	46?						>45		39		>43						>44	27	27	27	28	28
+		//		32						30	35	38	39	42									>43									38	37	37	36	32
+		//						1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32
+		//		32:13 nocount			-	16	20	25	21	26	26	25	23	23	25	24	25	25	22	22	22	25	22	23	22	26	22	24	20	19
+		//		32:14 nocount				17	24	22	27	27	26	24	24	23	27	24	26	25	24	24	25	26	25	24	24	25	22	24	23	20
+		//		32:15 nocount				21	25	23	25	30	28	26	27	27	25	25	26	27	28	24	25	26	25	27	26	29	26	25	23	25		
+		//		32:16 nocount				22	25	26	27	28	28	28	28	27	29	27	27	30	26	27	29	28	25	27	29	29	29	27	26	27
+		//		32:17 nocount				26	27	26	27	31	29	29	28	26	28	28	26	30	30	27	29	29	29	29	29	27	29	29	25	25
+		//		32:18 nocount				24	28	29	29	33	30	31	30	30	31	28	30	27	30	28	30	31	30	30	32	32	30	29	28	27
+		//		32:19 nocount				28	30	29	30	34	33	33	27	32	32	31	30	30	32	31	31	30	32	30	29	31	32	30	31	27
+		//		32:20 nocount				27	29	30	30	34	33	35	29	32	34	32	34	32	33	30	31	34	33	33	32	34	32	33	31	29
+		//		32:21 nocount				28	32	32	30	36	33	33	33	35	34	31	34	35	36	32	33	34	35	34	32	36	34	33	33	30
+		//		32:22 nocount				31	31	34	35	37	38	35	36	35	35	34	35	37	36	32	33	34	34	34	39	36	33	34	33	33
+		//		32:23 nocount				31	33	34	33	37	36	37	35	39	36	35	36	36	37	34	35	38	36	36	34	36	37	37	34	32
+		//		32:24 nocount				30	35	36	37	39	40	39	36	36	36	36	38	37	37	36	35	36	36	38	35	37	37	36	36	34
+		//		32nc:22+23+24				92	99	104	105	113	114	111	107	110	107	105	109	110	110	102	103	108	106	108	108	109	107	107	103	99
+		//		32nc:19+20+21				83	91	91	90	104	99	101	89	99	100	94	98	97	101	93	95	98	100	97	93	101	98	96	95	86
+		//		32nc:19...24				175	190	195	195	217	213	212	196	209	207	199	207	207	211	195	198	206	206	205	201	210	205	203	198	185				8,,,,,9,,10,,17,,24,,12,,,13,15,16,,21
+		//		32nc:17+18+19				78	85	84	86	98	92	93	85	88	91	87	86	87	92	86	90	90	91	89	90	90	91	88	84	79			
+		//		32nc:17+...+22				164	177	180	181	205	196	196	183	190	194	184	189	191	197	180	187	192	193	190	193	196	190	188	181	171				8,,,,,,,,,17,,9,10,24,,,13,,21,23
+		//		32nc:17..22+32:12..17		296	333	353	358	395	376	395	388	383	392	393	387	364	364	357	369	389	386	373	386	381	368	367	362	337				8,10,,,14,,13,,,,20,,11,,15
+		//		32nc:19+20+21				83	91	91	90	104	99	101	89	99	100	94	98	97	101	93	95	98	100	97	93	101	98	96	95	86
+		//		32nc:13+14+...+18			126	149	151	156	175	167	163	160	156	165	156	158	162	160	152	160	164	156	160	162	168	158	158	145	143
+		//		32:12						19	22	20	25	28	22	25	30	25	27	28	29	25	20	24	23	28	26	26	27	28	22	25	22	20				11,,15,,8,14,20,24,,13,23,,21,22		616
+		//		32:13					-	20	25	28	25	28	26	27	27	32	32	30	30	28	22	24	26	29	32	27	28	29	25	28	26	22	-			12,13,21,,,14,15,,20,24,,6,8,16,23,26	676,60/25=2.40
+		//		32:14						18	24	25	30	30	27	35	34	30	31	35	29	30	26	30	25	32	30	31	31	28	29	27	30	27				10,14,,11,,,20,,13,22,23				724,48/25=1.92
+		//		32:15						23	29	31	34	33	34	35	37	34	33	36	35	30	32	32	35	34	33	31	33	31	33	31	32	30				11,,14,,10,15,19,,7,9,12,20,,			811,87/25=3.48
+		//		32:16						24	28	32	36	34	34	38	37	35	38	38	35	29	32	32	37	36	35	32	37	33	32	29	34	33				14,10,13,,11,23,19,,7,20,,12,15,21,,	840,29/25=1.16
+		//		32:17						28	28	37	37	37	37	39	40	37	37	>41	40	31	37	35	36	38	37	36	37	36	37	38	37	34				14,,11,10,						56/20=2.80
+		//		32:12+13+...17				132	156	173	187	190	180	199	205	193	198	209	198	173	167	177	182	197	193	183	193	185	178	179	181	166				14...11...10,,13,15,,20...12,21,23
+		//		32nc:19..24 + 32:12..17		307	346	368	382	407	393	411	401	402	405	408	405	380	378	372	380	403	399	388	394	395	383	382	379	351				10,,,,14,,8,,,13,15,,,20,,12,,11
+		//		32:17-12					9	6	17	12	9	15	14	10	12	10	14	6	6	17	11	13	10	11	10	10	8	15	13	15	14
+
+		//						1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32
+		//		64:19:1-32 nc				18	18	19	25	25	26	25	28	28	28	28	29	30	29	29	27	26	28	25	26	28	26	28	27	29	26	27	26	26
+		//		64:20:1-32 nc				18	19	21	22	27	28	27	30	30	30	27	30	31	29	29	29	29	31	26	28	28	27	31	30	30	30	29	29	25
+		//		64:21:1-32 nc				17	19	23	25	27	30	31	31	31	29	30	30	32	31	29	30	31	30	29	30	28	30	31	32	33	29	31	31	30
+		//		64:22:1-32 nc				19	22	24	26	29	29	27	32	33	32	31	33	32	32	32	30	32	32	28	31	30	34	32	31	32	33	32	31	32
+		//		64:23:1-32 nc											32	33			33	34	32				35					33	32	34				.
+		//		64:24:1-32 nc											35	34			34	37	34				35					32	32	36				.
+		//		sum:64nc:19..22				72	78	87	98	108	113	110	121	122	119	116	122	125	121	119	116	118	121	108	115	114	117	122	120	124	118	119	117	113		41,,16,,28,37,48,,,12,15,26,,11,17,21,,27
+		//		sum:64nc:19..23											153	155			155	159	153				156					155	152	158				.		16,37,41,,28,,48,,21,,12,15,26
+		//		sum:64nc:19..24											188	189			189	196	187				191					187	184	194				.		16,,37,,28,,41,,,,21,48
+		//						33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	50	51	52	53	54	55	56	57	58	59	60	61	62	63	64
+		//		64:19:33-64 nc	24	21	24	24	29	29	27	27	30	29	29	27	26	27	27	30	27	26	28	27	28	26	27	23	27	23	19	19
+		//		64:20:33-64 nc	26	25	25	27	31	30	30	29	31	27	29	28	28	29	29	31	31	29	29	25	28	26	30	26	27	22	22	18
+		//		64:21:33-64 nc	27	25	26	29	31	29	30	30	31	32	28	30	30	29	29	32	28	29	29	31	29	28	28	28	27	25	20	20
+		//		64:22:33-64 nc	29	27	29	28	33	30	30	32	34	29	30	28	30	31	31	31	31	31	31	30	31	30	30	28	29	26	22	23
+		//		64:23:33-64 nc					35				33							33												.						.
+		//		64:24:33-64 nc					36				35							34												.
+		//		sum:64nc:19..22	106	98	104	108	124	118	117	118	126	117	116	113	114	116	116	124	117	115	117	113	116	110	115	105	110	96	83	80
+		//		sum:64nc:19..23					159				159							157												.
+		//		sum:64nc:19..24					195				194							191												.
+		return a;
+	}
+	void _seed(Uint64 s) {enum { SEEDING_ROUNDS = (OUTPUT_BITS == 64) ? 24 : ((OUTPUT_BITS == 32) ? 24 : ((OUTPUT_BITS == 16) ? 16 : ((OUTPUT_BITS == 8) ? 12 : -1))) };
+		//16 bit: 9/10/12/16
+		//32 bit: 15/18/21/24
+		//64 bit: ?
+		if (OUTPUT_BITS == 64) { a = b = c = s; counter = 0; }
+		else if (OUTPUT_BITS == 32) { a = s; b = s >> 32; c = a ^ b; counter = 0; }
+		else if (OUTPUT_BITS == 16) {a = s;b = s >> 16;c = s >> 32;counter = s >> 48;}
+		else if (OUTPUT_BITS == 8) {s ^= s >> 32;a = s; b = s >> 8; c = s >> 16; counter = s >> 24;}
+		for (int i = 0; i < SEEDING_ROUNDS; i++) _raw_native();
 	}
 	void walk_state(StateWalkingObject *walker) {
 		walker->handle(a);
@@ -331,14 +454,14 @@ public:
 	32 bit: 25,8,3
 	64 bit: 25,12,3
 */
-class raw_sfc_alternative8  : public _sfc_alternative<Uint8 , 3,2,1> {public: Uint8  raw8 () {return _raw_native();}};
-class raw_sfc_alternative16 : public _sfc_alternative<Uint16, 7,3,2> {public: Uint16 raw16() {return _raw_native();}};
-class raw_sfc_alternative32 : public _sfc_alternative<Uint32,25,8,3> {public: Uint32 raw32() {return _raw_native();}};
-class raw_sfc_alternative64 : public _sfc_alternative<Uint64,25,12,3> {public: Uint64 raw64() {return _raw_native();}};
-POLYMORPHIC_CANDIDATE(sfc_alternative, 64)
-POLYMORPHIC_CANDIDATE(sfc_alternative, 32)
-POLYMORPHIC_CANDIDATE(sfc_alternative, 16)
-POLYMORPHIC_CANDIDATE(sfc_alternative, 8)
+class raw_sfc_alternative8  : public _sfc_alternative<Uint8 , 3, 2,1> { public: Uint8  raw8() {return _raw_native();} void seed(Uint64 s) {_seed(s);};};
+class raw_sfc_alternative16 : public _sfc_alternative<Uint16, 7, 3,2> {public: Uint16 raw16() {return _raw_native();} void seed(Uint64 s) {_seed(s);};};
+class raw_sfc_alternative32 : public _sfc_alternative<Uint32,25, 8,3> {public: Uint32 raw32() {return _raw_native();} void seed(Uint64 s) {_seed(s);};};
+class raw_sfc_alternative64 : public _sfc_alternative<Uint64,25,12,3>{public: Uint64 raw64() {return _raw_native();} void seed(Uint64 s) {_seed(s);};};
+SEEDED_POLYMORPHIC_CANDIDATE(sfc_alternative, 64)
+SEEDED_POLYMORPHIC_CANDIDATE(sfc_alternative, 32)
+SEEDED_POLYMORPHIC_CANDIDATE(sfc_alternative, 16)
+SEEDED_POLYMORPHIC_CANDIDATE(sfc_alternative, 8)
 
 /*#include <intrin.h>
 static Uint32 bswap32a(Uint32 v) {v = (v << 16) | (v >> 16); v = ((v & 0xff00ff00) >> 8) | ((v & 0x00ff00ff) << 8); return v;}
@@ -512,104 +635,167 @@ class raw_mcx32 : public _mcx<Uint32,13,0x6595a395a1ec531b> {public: Uint32 raw3
 POLYMORPHIC_CANDIDATE(mcx, 32)
 //POLYMORPHIC_CANDIDATE(mcx, 64)
 
-class raw_xsm16 {
+class raw_siphash {
 public:
+	typedef Uint64 Word;
 	enum {
 		OUTPUT_TYPE = PractRand::RNGs::OUTPUT_TYPES::NORMAL_1,
-		OUTPUT_BITS = 16,
-		FLAGS = PractRand::RNGs::FLAG::ENDIAN_SAFE | PractRand::RNGs::FLAG::USES_SPECIFIED | PractRand::RNGs::FLAG::USES_MULTIPLICATION | PractRand::RNGs::FLAG::SUPPORTS_FASTFORWARD
-		//FLAGS = PractRand::RNGs::FLAG::NEEDS_GENERIC_SEEDING | PractRand::RNGs::FLAG::ENDIAN_SAFE | PractRand::RNGs::FLAG::USES_SPECIFIED | PractRand::RNGs::FLAG::USES_MULTIPLICATION | PractRand::RNGs::FLAG::SUPPORTS_FASTFORWARD
+		OUTPUT_BITS = sizeof(Word)* 8,
+		FLAGS = PractRand::RNGs::FLAG::NEEDS_GENERIC_SEEDING
 	};
-public:
-	//PractRand::RNGs::Raw::xsm32 base;
-	//Uint16 raw16() {return Uint16(base.raw32()>>0);}
-	//void walk_state(StateWalkingObject *walker) {base.walk_state(walker);}
-protected:
-	Uint16 lcg_low, lcg_high, lcg_adder, history;
-	void step_backwards() {
-		if (!lcg_low && !lcg_high) lcg_adder -= 2;
-		bool carry = lcg_low < lcg_adder;
-		lcg_low -= lcg_adder;
-		lcg_high -= lcg_low + carry;
-	}
-	Uint16 rotate16(Uint16 value, int bits) {return (value << bits) | (value >> (16-bits));}
-	Uint64 rotate64(Uint64 value, int bits) {return (value << bits) | (value >> (64-bits));}
-public:
-	Uint16 raw16() {
-		const Uint16 K = 0xa395;
-		
-		// 16 GB, medium avalanche, good speed
-		/*Uint16 tmp = lcg_high;
-		tmp ^= tmp >> 8;
-		tmp *= K;
-		tmp += rotate16(tmp ^ lcg_low, 6);
-		Uint16 old_lcg_low = lcg_low;
-		lcg_low += lcg_adder;
-		lcg_high += old_lcg_low + ((lcg_low < lcg_adder) ? 1 : 0);
-		old = history;
-		history = tmp;
-		if (!lcg_low) if (!lcg_high) lcg_adder += 2;
-		return tmp + rotate16(old, 8);//*/
-
-		// 128 GB, good avalanche, acceptable speed
-		/*Uint16 old = history * K;
-		Uint16 tmp = lcg_high;
-		tmp += rotate16(tmp ^ lcg_low, 6);
-		tmp *= K;
-		old ^= old >> 8;
-		history = tmp ^=  tmp >> 8;
-
-		Uint16 old_lcg_low = lcg_low;
-		lcg_low += lcg_adder|1;
-		lcg_high += old_lcg_low + ((lcg_low < lcg_adder) ? 1 : 0);
-		if (!lcg_low) if (!lcg_high) lcg_adder += 2;
-
-		return tmp + old;//*/
-
-		//*
-		// 256 GB, good avalanche, 
-		Uint16 rv = history * K;
-		Uint16 tmp = lcg_high ^ rotate16(lcg_high + lcg_low, 6);
-		tmp *= K;
-
-		Uint16 old_lcg_low = lcg_low;
-		lcg_low += lcg_adder;
-		old_lcg_low += ((lcg_low < lcg_adder) ? 1 : 0);
-		rv = rotate16(rv + lcg_high, 0) ^ rotate16(rv, 4);
-		lcg_high += old_lcg_low;
-		if (!lcg_low) if (!lcg_high) lcg_adder += 2;
-
-		rv += history = tmp ^= tmp >> 8;
-		return rv;//*/
-	}
-	void seed(Uint64 s) {
-		s ^= rotate64(s, 21) ^ rotate64(s, 39);
-		lcg_low = Uint16(s);
-		lcg_high = Uint16(s>>16);
-		lcg_adder = Uint16(s>>32) | 1;
-		history = 0;
-		raw16();
-	}
-	void walk_state(StateWalkingObject *walker) {
-		walker->handle(lcg_low);
-		walker->handle(lcg_high);
-		walker->handle(lcg_adder);
-		walker->handle(history);
-		if (walker->is_clumsy() && !walker->is_read_only()) {
-			lcg_adder |= 1;
-			step_backwards();
-			raw16();
+	Word raw64() { return _raw(); }
+	enum {
+		/*
+			for non-cryptographic use, using the most limited round function (double-rounds w/ 5 shifts):
+				ROUNDS_PER_OUTPUT >= 1
+				ROUNDS_PER_INPUT >= 1? (guessing based upon rounds per output)
+				(ROUNDS_PER_OUTPUT + EXTRA_ROUNDS + ROUNDS_PER_INPUT) >= 4?
+				...thus, probably ROUNDS_PER_INPUT = 1, ROUNDS_PER_OUTPUT = 1, EXTRA_ROUNDS = 2
+				...that works even if two state words are used for output
+				...and for any word size from 16 to 64
+			for cryptographic use, using the most limited round function (double-rounds w/ 5 shifts):
+				ROUNDS_PER_OUTPUT >= 4?
+				ROUNDS_PER_INPUT >= 4?
+				(ROUNDS_PER_OUTPUT + EXTRA_ROUNDS + ROUNDS_PER_INPUT) >= 10?
+				output function may need to be revised?
+				...
+		*/
+		ROUNDS_PER_INPUT = 1,
+		EXTRA_ROUNDS = 2,
+		ROUNDS_PER_OUTPUT = 1,
+		WORD_BITS = sizeof(Word)* 8,
+		SH1 = (WORD_BITS == 64) ? 11 : ((WORD_BITS == 32) ?  5 : ((WORD_BITS == 16) ? 3 : -1)),
+		SH2 = (WORD_BITS == 64) ? 16 : ((WORD_BITS == 32) ?  8 : ((WORD_BITS == 16) ? 4 : -1)),
+		SH3 = (WORD_BITS == 64) ? 32 : ((WORD_BITS == 32) ? 16 : ((WORD_BITS == 16) ? 8 : -1)),
+		SH4 = (WORD_BITS == 64) ? 13 : ((WORD_BITS == 32) ?  9 : ((WORD_BITS == 16) ? 3 : -1)),
+		SH5 = (WORD_BITS == 64) ? 19 : ((WORD_BITS == 32) ? 11 : ((WORD_BITS == 16) ? 5 : -1)),
+		SH6 = (WORD_BITS == 64) ? 32 : ((WORD_BITS == 32) ? 16 : ((WORD_BITS == 16) ? 8 : -1)),
+	};
+	Word k1, k2, counter;
+	class SipHash {
+	public:
+		//typedef Word Word;//gcc is objecting to this
+		Word v[4];
+		//Word fx;
+		//Word offset;
+		void initstate() {
+			v[0] = Word(0x736f6d6570736575ULL);
+			v[1] = Word(0x646f72616e646f6dULL);
+			v[2] = Word(0x6c7967656e657261ULL);
+			v[3] = Word(0x7465646279746573ULL);
 		}
-	}//*/
-	//void seek_forward (Uint64 how_far);
-	//void seek_backward(Uint64 how_far);
+		void kseed(Word k1, Word k2) {
+			initstate();
+			v[0] ^= k1; v[1] ^= k2;
+			v[2] ^= k1; v[3] ^= k2;
+			//fx = 0xff;
+			//offset = 0;
+		}
+		Word rotate(Word value, int bits) { return (value << bits) | (value >> (WORD_BITS - bits)); }
+		void round() {
+			//64: 11, 16, 32, 13, 19, 32
+			//32: 5, 8, 16, 9, 11, 16
+			//16: 3, 4, 8, 3, 5, 8
+			// 0 1
+			// 2 3
+			v[0] += v[1];
+			v[2] += v[3];
+			v[1] = rotate(v[1], SH1);
+			v[3] = rotate(v[3], SH2);
+			v[1] ^= v[0];
+			v[3] ^= v[2];
+
+			v[0] = rotate(v[0], SH3);
+			v[2] += v[1];
+			v[0] += v[3];
+			v[1] = rotate(v[1], SH4);
+			v[3] = rotate(v[3], SH5);
+			v[1] ^= v[2];
+			v[3] ^= v[0];
+
+		}
+		void extra_mixing() {
+			for (int i = 0; i < EXTRA_ROUNDS; i++) round();
+		}
+		void feed_in_word(Word value) {
+			v[1] ^= value;
+			for (int i = 0; i < ROUNDS_PER_INPUT; i++) round();
+			v[0] ^= value;
+		}
+		Word get_result() {
+			v[2] = ~v[2];
+			for (int i = 0; i < ROUNDS_PER_OUTPUT; i++) round();
+			return v[3];
+		}
+		Word get_result(Word driven) {
+			v[2] ^= driven;
+			for (int i = 0; i < ROUNDS_PER_OUTPUT; i++) round();
+			return v[3];
+		}
+	};
+	SipHash s;
+	Word _raw() {
+		return s.get_result();
+		//Word c = counter++; enum { X = 1 }; if (c & X) return s.v[c & X]; return s.get_result(c);
+		/*PractRand::RNGs::LightWeight::arbee hasher;
+		hasher.add_entropy64(counter++);
+		for (int i = 0; i < 2; i++) hasher.raw64();
+		return hasher.raw64();//*/
+		SipHash hasher = s;
+		hasher.feed_in_word(counter++);
+		hasher.extra_mixing();
+		if (WORD_BITS < 64 && !counter) {
+			k2++; if (!k2) k1++;
+			s.initstate();
+			s.feed_in_word(k1);
+			s.feed_in_word(k2);
+		}
+		return hasher.get_result();//*/
+	}
+	std::string get_name() const {
+		std::ostringstream tmp;
+		//tmp << "SipHash";
+		tmp << "SipHash" << (8 * sizeof(Word)) << "-" << ROUNDS_PER_INPUT << "-" << EXTRA_ROUNDS << "-" << ROUNDS_PER_OUTPUT;
+		return tmp.str();
+	}
+	void seed64(Uint64 seed) {
+		SipHash hasher;
+		hasher.initstate();
+		hasher.feed_in_word(seed);
+		hasher.feed_in_word(seed >> 32);
+		hasher.feed_in_word(seed >> 48);
+		hasher.extra_mixing();
+		k1 = hasher.get_result();
+		k2 = hasher.get_result();
+		counter = 0;
+		s.initstate();
+		s.feed_in_word(k1);
+		s.feed_in_word(k2);
+	}
+	void walk_state(PractRand::StateWalkingObject *walker) {
+		walker->handle(k1); walker->handle(k2);
+		walker->handle(counter);
+	}
 };
-POLYMORPHIC_CANDIDATE(xsm, 16)
-}
+class polymorphic_siphash : public PractRand::RNGs::vRNG64 {
+public:
+	typedef raw_siphash ImplementationType;
+	enum { OUTPUT_BITS = ImplementationType::OUTPUT_BITS, FLAGS = ImplementationType::FLAGS };
+	polymorphic_siphash(PractRand::SEED_NONE_TYPE) {}
+	polymorphic_siphash(PractRand::SEED_AUTO_TYPE) { autoseed(); }
+	polymorphic_siphash(Uint64 seed_value) { seed(seed_value); }
+	ImplementationType implementation;
+	Uint64 raw64() { return implementation.raw64(); }
+	void walk_state(StateWalkingObject *walker) { implementation.walk_state(walker); }
+	std::string get_name() const { return implementation.get_name(); }
+};
+
+
+
+}//namespace Candidates
 #if defined RNG_from_name_h
 namespace RNG_Factories {
 	void register_candidate_RNGs() {
-		RNG_factory_index["xsm16"] = _generic_recommended_RNG_factory<Candidates::polymorphic_xsm16>;
 		RNG_factory_index["sfc_alternative64"] = _generic_recommended_RNG_factory<Candidates::polymorphic_sfc_alternative64>;
 		RNG_factory_index["sfc_alternative32"] = _generic_recommended_RNG_factory<Candidates::polymorphic_sfc_alternative32>;
 		RNG_factory_index["sfc_alternative16"] = _generic_recommended_RNG_factory<Candidates::polymorphic_sfc_alternative16>;
@@ -627,6 +813,7 @@ namespace RNG_Factories {
 		RNG_factory_index["ranrot_var16"] = _generic_recommended_RNG_factory<Candidates::polymorphic_ranrot_variant16>;
 		RNG_factory_index["ranrot_var8" ] = _generic_recommended_RNG_factory<Candidates::polymorphic_ranrot_variant8>;
 		RNG_factory_index["ranrot_mcx32"] = _generic_recommended_RNG_factory<Candidates::polymorphic_mcx32>;
+		RNG_factory_index["siphash"] = _generic_recommended_RNG_factory<Candidates::polymorphic_siphash>;
 	}
 }
 #endif

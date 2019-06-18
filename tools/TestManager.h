@@ -7,13 +7,15 @@ protected:
 	int max_buffer_amount;
 	int prefix_blocks;
 	int main_blocks;
+	int blocks_to_repeat;
 	Uint64 blocks_so_far;
+	bool freshly_created;
 	int prep_blocks(Uint64 &blocks);
 public:
 	const PractRand::RNGs::vRNG *get_rng() const {return rng;}//RNG being tested
 	Uint64 get_blocks_so_far() {return blocks_so_far;}//number of blocks tested
 
-	TestManager(PractRand::RNGs::vRNG *rng_, PractRand::Tests::ListOfTests *tests_, PractRand::RNGs::vRNG *known_good_=NULL, int max_buffer_amount_ = 1 << (25-10));
+	TestManager(PractRand::Tests::ListOfTests *tests_, PractRand::RNGs::vRNG *known_good_=NULL, int max_buffer_amount_ = 1 << (25-10));
 	//rng_ = RNG to test
 	//tests_ = list of tests use on the RNG
 	//known_good_ = sometimes the tests or test manager need good random numbers for some reason
@@ -28,8 +30,8 @@ public:
 	virtual void get_results( std::vector<PractRand::TestResult> &result_vec );//gets the results
 };
 
-TestManager::TestManager(PractRand::RNGs::vRNG *rng_, PractRand::Tests::ListOfTests *tests_, PractRand::RNGs::vRNG *known_good_, int max_buffer_amount_) {
-	rng = rng_;
+TestManager::TestManager(PractRand::Tests::ListOfTests *tests_, PractRand::RNGs::vRNG *known_good_, int max_buffer_amount_) {
+	rng = NULL;
 	tests = tests_;
 	known_good = known_good_;
 	if (!known_good) known_good = new PractRand::RNGs::Polymorphic::hc256(PractRand::SEED_AUTO);
@@ -37,16 +39,23 @@ TestManager::TestManager(PractRand::RNGs::vRNG *rng_, PractRand::Tests::ListOfTe
 	max_buffer_amount = max_buffer_amount_;
 	prefix_blocks = 0;
 	main_blocks = 0;
-	buffer.resize(max_buffer_amount + PractRand::Tests::TestBaseclass::REPEATED_BLOCKS);
 	for (unsigned int i = 0; i < tests->tests.size(); i++) tests->tests[i]->init(known_good);
+	freshly_created = true;
 }
 TestManager::~TestManager() {
 	for (unsigned int i = 0; i < tests->tests.size(); i++) tests->tests[i]->deinit();
 	for (unsigned int i = 0; i < tests->tests.size(); i++) delete tests->tests[i];
 }
 void TestManager::reset(PractRand::RNGs::vRNG *rng_) {
-	for (unsigned int i = 0; i < tests->tests.size(); i++) tests->tests[i]->deinit();
+	if (!freshly_created) for (unsigned int i = 0; i < tests->tests.size(); i++) tests->tests[i]->deinit();
+	freshly_created = false;
 	for (unsigned int i = 0; i < tests->tests.size(); i++) tests->tests[i]->init(known_good);
+	blocks_to_repeat = 0;
+	for (unsigned int i = 0; i < tests->tests.size(); i++) {
+		int rb = tests->tests[i]->get_blocks_to_repeat();
+		if (blocks_to_repeat < rb) blocks_to_repeat = rb;
+	}
+	buffer.resize(max_buffer_amount + blocks_to_repeat);
 	if (rng_) rng = rng_;
 	main_blocks = 0;
 	prefix_blocks = 0;
@@ -58,9 +67,9 @@ int TestManager::prep_blocks(Uint64 &blocks) {
 	int delta_blocks = int(_delta_blocks);
 	blocks -= delta_blocks;
 	size_t repeat_region_start, repeat_region_size;
-	if (prefix_blocks + main_blocks >= PractRand::Tests::TestBaseclass::REPEATED_BLOCKS) {
-		repeat_region_start = prefix_blocks + main_blocks - PractRand::Tests::TestBaseclass::REPEATED_BLOCKS;
-		repeat_region_size = PractRand::Tests::TestBaseclass::REPEATED_BLOCKS;
+	if (prefix_blocks + main_blocks >= blocks_to_repeat) {
+		repeat_region_start = prefix_blocks + main_blocks - blocks_to_repeat;
+		repeat_region_size = blocks_to_repeat;
 	}
 	else {
 		repeat_region_start = 0;

@@ -46,11 +46,7 @@ namespace PractRand {
 		protected:
 			Uint64 blocks_tested;
 		public:
-			enum {
-				REPEATED_BLOCKS = 1,//at least 1, may be (much) more
-				REPEATED_BYTES = TestBlock::SIZE * REPEATED_BLOCKS
-			};
-			virtual void init( PractRand::RNGs::vRNG *known_good ) {}
+			virtual void init(PractRand::RNGs::vRNG *known_good);
 			virtual void deinit() {}
 			virtual ~TestBaseclass()   {}
 			virtual std::string get_name() const = 0;
@@ -58,10 +54,8 @@ namespace PractRand {
 			//1.  Maximum length per test_blocks() call is about 512MB (numblocks==1<<19)
 			//2.  Maximum total length from multiple calls varies slightly but is usually 
 			//       at least 256 TB (numblocks == 1<<48), and often more.  
-			//3.  If the total length is too short then result_to_pvalue will work even 
-			//       worse than usual.  Typical minimum recommended lengths are on the 
-			//       order of 1 MB, but some tests require much more or can get by on 
-			//       much less than that.  
+			//3.  If the total length is too short then results may not be produced, or 
+			//       might be less reliable.  
 			//4.  You are supposed to make sure that the last REPEATED_BLOCKS blocks from 
 			//       your previous test_blocks() calls are prepended on to the blocks 
 			//       array.  Most tests don't care about this, but a few do.  The extra 
@@ -72,19 +66,11 @@ namespace PractRand {
 
 			virtual void get_results ( std::vector<TestResult> &results ) = 0;
 
-			//result_to_pvalue generally produces *VERY* crude estimates
-			//and sometimes returns -1, meaning unknown
-			//virtual double result_to_pvalue ( Uint64 blocks, double r );
-			//virtual bool recommend_subtest_tree_descent() const;
-
-			//virtual int get_num_subtests() const;
-			//virtual std::string get_subtest_name  (int index) const;
-			//virtual double      get_subtest_result(int index);
-			//virtual double subtest_result_to_pvalue(int index, Uint64 blocks, double result);
+			virtual int get_blocks_to_repeat() const;//this is the number of blocks at negative indeces that test_blocks should be able to access
+			//containing duplicates of data from the end of the previous set of blocks passed to test_blocks
+			//obviously up to the limit of the number of blocks previously passed in
+			//this may not be changed after the call to init()
 		protected:
-			//std::vector<double> cached_results;
-			//Uint64 cached_results_blocks;
-			//virtual void cache_current_results() const = 0;
 		};
 	}//Tests
 }//PractRand

@@ -149,10 +149,10 @@ namespace PractRand {
 //			DISTRIBUTIONS_TYPE__NONE = 0,
 //			DISTRIBUTIONS_TYPE__NORMAL = 1
 //		};
-		namespace SEEDING_TYPES { enum {
-			SEEDING_TYPE_INT = 1,//seed(Uint64)
-			SEEDING_TYPE_VRNG = 2//seed(vRNG *)
-		};}
+//		namespace SEEDING_TYPES { enum {
+//			SEEDING_TYPE_INT = 1,//seed(Uint64)
+//			SEEDING_TYPE_VRNG = 2//seed(vRNG *)
+//		};}
 //		enum INTERNAL_STATES_VALID {
 //			INTERNAL_STATES_VALID__LOW = 0,//don't manually modify state
 //			INTERNAL_STATES_VALID__MED = 1,//manually modification of state not recommended, but unlikely to go horribly wrong
@@ -178,10 +178,12 @@ namespace PractRand {
 			USES_CYCLIC_BUFFER = 1<<8,
 			USES_FLOW_CONTROL = 1<<9,//very simple flow control is not counted
 			USES_BIT_SCANS = 1<<10,//bsf & bsr opcodes on x86
-			ENDIAN_SAFE = 1<<11,//single flag for output (raw*) and input (add_entropy*)
-			OUTPUT_IS_BUFFERED = 1<<12,
-			OUTPUT_IS_HASHED = 1<<13,
-			STATE_UNAVAILABLE = 1<<14,//can be seeded via state-walking, but don't trust any other state-walking operations (never true on recommended RNGs)
+			USES_OTHER_WORD_SIZES = 1 << 11,//uses mathematical primitives that do not match the size of its output
+			ENDIAN_SAFE = 1<<12,//single flag for output (raw*) and input (add_entropy*)
+			OUTPUT_IS_BUFFERED = 1<<13,
+			OUTPUT_IS_HASHED = 1<<14,
+			STATE_UNAVAILABLE = 1<<15,//don't trust any state-walking operations other than simple seeding (never true on recommended RNGs)
+			SEEDING_UNSUPPORTED = 1<<16,//PRNG does not support conventional seeding (example: an RNG that just returns data from standard input)
 			NEEDS_GENERIC_SEEDING = 1<<31,
 		};}
 		typedef vRNG PolymorphicRNG;

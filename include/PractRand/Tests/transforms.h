@@ -19,6 +19,7 @@ namespace PractRand {
 				virtual ~multiplex ( );
 				virtual std::string get_name() const;
 				virtual void test_blocks(TestBlock *data, int numblocks);
+				virtual int get_blocks_to_repeat() const;
 
 				virtual int get_num_children() const;
 				virtual TestBaseclass *get_child(int index) const;

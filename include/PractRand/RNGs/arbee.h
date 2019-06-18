@@ -23,6 +23,7 @@ namespace PractRand {
 				Uint64 raw64();
 				void seed(Uint64 s);
 				void seed(Uint64 seed1, Uint64 seed2, Uint64 seed3, Uint64 seed4);//custom seeding
+				void seed(vRNG *rng);
 				void walk_state(StateWalkingObject *walker);
 				void reset_entropy();
 				void add_entropy8 (Uint8  value);
@@ -56,7 +57,7 @@ namespace PractRand {
 				Uint64 raw64();
 				void seed(Uint64 s);
 				void seed(Uint64 s1, Uint64 s2, Uint64 s3, Uint64 s4);
-				using vRNG::seed;
+				void seed(vRNG *rng);
 				void walk_state(StateWalkingObject *walker);
 				void reset_entropy();
 				void add_entropy8 (Uint8  value);

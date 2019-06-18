@@ -30,6 +30,7 @@ namespace PractRand {
 				}
 				void seed(Uint64 s);
 				void seed(Uint64 s[256]);
+				void seed(vRNG *seeder_rng);
 				void walk_state(StateWalkingObject *walker);
 				//static void self_test();
 			};
@@ -39,6 +40,7 @@ namespace PractRand {
 			class isaac64x256 : public vRNG64 {
 				PRACTRAND__POLYMORPHIC_RNG_BASICS_H(isaac64x256)
 				void seed(Uint64 s);
+				void seed(vRNG *seeder_rng);
 				void flush_buffers();
 			};
 		}

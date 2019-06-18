@@ -1,8 +1,7 @@
 PractRand (Practically Random) is a C++ library of pseudo-random number 
 generators (PRNGs, or just RNGs) and statistical tests for RNGs.  
 
-version 0.92
-
+version 0.94
 
 1. Randon Number Generation with PractRand
 
@@ -74,7 +73,7 @@ D. No realistic maximum sequence length for testing.  Competing
 software packages generally either have either interface issues, bugs,  
 or severe scalability issues that make testing very long sequences 
 impossible or meaningless, but PractRand has been tested on sequence 
-lengths over 100 terabytes and is expected to work on sequence lengths 
+lengths over 500 terabytes and is expected to work on sequence lengths 
 up to a few exabytes.  
 
 E. More original tests.  Competing software packages tend to mainly 
@@ -107,32 +106,41 @@ by a competitor that uses a more redundant set of tests.
 Other packages for testing PRNGs:
 (good quality means ability to distinguish good RNGs from bad RNGs)
 (good presentation means showing test results in ways that are easy to understand and are useful)
+gjrand - http://gjrand.sourceforge.net/
+	quality: very good
+	presentation: decent
+	open-source: viral (GPL)
+	multithreaded: yes
+	This one is pretty obscure, but works really well.  I've never 
+	tried to use it on a non-unix environment, but the build process on 
+	linux was straightforward.  The documentation seems a bit 
+	lacking.  
 TestU01 - http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 	quality: good
 	presentation: decent
 	open source: non-commercial only
-	The best alternative or supplement to PractRand for normal 
-	testing purposes.  
-	It's rather difficult to build on win32 though.  
+	multithreaded: no
+	This is popular and quite decent.  Not quite as good as PractRand 
+	or gjrand IMHO, but still pretty good.  
+	It's rather difficult to build on windows though.  
 RaBiGeTe - http://cristianopi.altervista.org/RaBiGeTe_MT/
-	quality: decent
+	quality: marginal
 	presentation: overly complex
 	open source: recent versions closed source, older versions viral (GPL)
-	The third best testing package after PractRand and TestU01.  
-	RaBiGeTe has a tendency to crash a bit, and the range of biases 
-	it can detect is much more limited than PractRand, but it's still 
-	useful.  
+	multithreaded: yes
+	The fourth best testing package after PractRand and gjrand and 
+	TestU01.  The range of biases it can detect is a bit limited - it 
+	generally works best on LCGs.  
 	It is more efficient on a per-bit basis, and comes with a GUI that can 
 	help visualize the distribution of results from multiple samples if 
 	desired.  
-	This is the only test suite besides PractRand that has built-in 
-	support for multithreading.  
 Dieharder - http://www.phy.duke.edu/~rgb/General/dieharder.php
 	quality: bad
 	presentation: decent
 	open source: viral (GPL)
+	multithreaded: no? (don't remember)
 	Pretty bad at the moment, but some parts show the potential 
-	to be very good with just a little more work.  
+	to be very good with a little more work.  
 	The command line interface can be very convenient for 
 	scripting.  
 	I was unable to build it on win32.  
@@ -142,23 +150,21 @@ NIST STS - http://csrc.nist.gov/groups/ST/toolkit/rng/index.html
 	quality: bad
 	presentation: bad
 	open source: public domain
+	multithreaded: no
 	Widely used, but not very good.  
 Diehard - http://www.stat.fsu.edu/pub/diehard/
 	quality: bad
 	presentation: bad
 	open source: yes (not sure what the license is)
+	multithreaded: no
 	Avoid this, it is only of historical interest.  
 	Dieharder (see above) was named after this.  
 ENT - http://www.fourmilab.ch/random/
 	quality: bad
 	presentation: mediocre
 	open source: yes (not sure what the license is)
+	multithreaded: no?
 	A very weak test.  
-gjrand - http://gjrand.sourceforge.net/
-	quality: ???
-	presentation: ???
-	open source: yes (not sure what the license is)
-	Fairly obscure.  I have not tried it.  
 BSI test suite - ???
 	quality: ???
 	presentation: ???

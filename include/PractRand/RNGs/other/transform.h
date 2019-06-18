@@ -126,6 +126,79 @@ namespace PractRand {
 					std::string get_name() const;
 				};
 
+				class Discard16to8 : public Transform8 {
+					typedef Uint16 InWord;
+					typedef Uint8 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard16to8(vRNG *rng);
+					Uint8 raw8();
+					std::string get_name() const;
+				};
+				class Discard32to8 : public Transform8 {
+					typedef Uint32 InWord;
+					typedef Uint8 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard32to8(vRNG *rng);
+					Uint8 raw8();
+					std::string get_name() const;
+				};
+				class Discard64to8 : public Transform8 {
+					typedef Uint64 InWord;
+					typedef Uint8 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard64to8(vRNG *rng);
+					Uint8 raw8();
+					std::string get_name() const;
+				};
+				class Discard32to16 : public Transform16 {
+					typedef Uint32 InWord;
+					typedef Uint16 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard32to16(vRNG *rng);
+					Uint16 raw16();
+					std::string get_name() const;
+				};
+				class Discard64to16 : public Transform16 {
+					typedef Uint64 InWord;
+					typedef Uint16 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard64to16(vRNG *rng);
+					Uint16 raw16();
+					std::string get_name() const;
+				};
+				class Discard64to32 : public Transform32 {
+					typedef Uint64 InWord;
+					typedef Uint32 OutWord;
+					enum { INPUT_BITS = sizeof(InWord)* 8 };
+					InWord *buffer;
+					int index;
+					void refill();
+				public:
+					Discard64to32(vRNG *rng);
+					Uint32 raw32();
+					std::string get_name() const;
+				};
+
 				class BaysDurhamShuffle64 : public Transform64 {
 					Uint64 table[256];
 					Uint8 prev;

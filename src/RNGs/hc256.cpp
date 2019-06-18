@@ -14,7 +14,8 @@ PRACTRAND__POLYMORPHIC_RNG_BASICS_C32(hc256)
 std::string PractRand::RNGs::Polymorphic::hc256::get_name() const {return "hc256";}
 void PractRand::RNGs::Polymorphic::hc256::flush_buffers() {implementation.flush_buffers();}
 void PractRand::RNGs::Polymorphic::hc256::seed(Uint64 s) {implementation.seed(s);}
-void PractRand::RNGs::Polymorphic::hc256::seed(Uint32 key_and_iv[16]) {implementation.seed(key_and_iv);}
+void PractRand::RNGs::Polymorphic::hc256::seed(Uint32 key_and_iv[16]) { implementation.seed(key_and_iv); }
+void PractRand::RNGs::Polymorphic::hc256::seed(vRNG *seeder_rng) { implementation.seed(seeder_rng); }
 
 //raw:
 PractRand::RNGs::Raw::hc256::~hc256() {std::memset(this, 0, sizeof(this));}
@@ -127,6 +128,11 @@ void PractRand::RNGs::Raw::hc256::seed(Uint64 s) {//LOCKED, do not change
 	seed_array[0] = Uint32(s);
 	seed_array[1] = Uint32(s >> 32);
 	for (int i = 2; i < 16; i++) seed_array[i] = 0;
+	seed(seed_array);
+}
+void PractRand::RNGs::Raw::hc256::seed(vRNG *seeder_rng) {//LOCKED, do not change
+	Uint32 seed_array[16];
+	for (int i = 0; i < 16; i++) seed_array[i] = seeder_rng->raw32();
 	seed(seed_array);
 }
 void PractRand::RNGs::Raw::hc256::self_test() {

@@ -29,7 +29,7 @@ Two functions are performed that may need to use platform-specific functionality
 		if that is not possible, then use the time (as measured with libc calls) instead
 			to do: add a fallback case that blocks while listening to timing noise for entropy
 	2. obtaining a unique 64 bit number that should never duplicate, and should be thread-safe.
-		preferably with an interlocked increment
+		preferably with an atomic increment
 		if that is not possible then with a malloc(1) that is never freed
 			(this should get used at most once per thread creation)
 */
@@ -79,7 +79,7 @@ bool PractRand::Internals::add_entropy_automatically( PractRand::RNGs::vRNG *rng
 	}
 #endif
 #if 1
-	{//unix (linux/bsd/osx/etc, all flavor supposedly)
+	{//unix (linux/bsd/osx/etc, all flavors supposedly)
 		//mostly safe to use even on platforms where it won't work
 		std::FILE *f;
 		Uint64 buf[N64];
@@ -99,7 +99,7 @@ bool PractRand::Internals::add_entropy_automatically( PractRand::RNGs::vRNG *rng
 	{
 	//disabled to avoid the possibility of blocking
 		if (millseconds && f = std::fopen("/dev/random", "rb")) {
-			//skip this if a good source was already found, cause this can block
+			//skip this if a good source was already found, because this can block
 			Uint64 buf[N64];
 			if(std::fread(buf,N64*sizeof(buf[0]),1,f)) {
 				for (int i = 0; i < N64; i++) rng->add_entropy64(buf[i]);
@@ -141,15 +141,9 @@ bool PractRand::Internals::add_entropy_automatically( PractRand::RNGs::vRNG *rng
 		rng->add_entropy32(t);
 	}
 #endif
-#if defined _MSC_VER && ((defined _M_IX86 && _M_IX86 >= 500))
-// || defined _M_X64 || defined _M_AMD64)
+#if defined _MSC_VER && ((defined _M_IX86 && _M_IX86 >= 500) || defined _M_X64 || defined _M_AMD64)
 	{
-		Uint32 t;
-		__asm {
-			RDTSC
-			mov [t], eax
-		}
-		rng->add_entropy32(t);
+		rng->add_entropy64(__rdtsc());
 	}
 #endif
 #if (defined _WIN32) && 0 //DISABLED

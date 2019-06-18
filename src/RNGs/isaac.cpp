@@ -12,13 +12,15 @@ using namespace PractRand;
 
 //polymorphic:
 PRACTRAND__POLYMORPHIC_RNG_BASICS_C32(isaac32x256)
-void PractRand::RNGs::Polymorphic::isaac32x256::seed(Uint64 s) {implementation.seed(s);}
-void PractRand::RNGs::Polymorphic::isaac32x256::flush_buffers() {implementation.flush_buffers();}
+void PractRand::RNGs::Polymorphic::isaac32x256::seed(Uint64 s) { implementation.seed(s); }
+void PractRand::RNGs::Polymorphic::isaac32x256::seed(vRNG *seeder_rng) { implementation.seed(seeder_rng); }
+void PractRand::RNGs::Polymorphic::isaac32x256::flush_buffers() { implementation.flush_buffers(); }
 std::string PractRand::RNGs::Polymorphic::isaac32x256::get_name() const {return "isaac32x256";}
 
 PRACTRAND__POLYMORPHIC_RNG_BASICS_C64(isaac64x256)
 void PractRand::RNGs::Polymorphic::isaac64x256::seed(Uint64 s) {implementation.seed(s);}
-void PractRand::RNGs::Polymorphic::isaac64x256::flush_buffers() {implementation.flush_buffers();}
+void PractRand::RNGs::Polymorphic::isaac64x256::seed(vRNG *seeder_rng) { implementation.seed(seeder_rng); }
+void PractRand::RNGs::Polymorphic::isaac64x256::flush_buffers() { implementation.flush_buffers(); }
 std::string PractRand::RNGs::Polymorphic::isaac64x256::get_name() const {return "isaac64x256";}
 
 //raw:
@@ -117,6 +119,13 @@ void PractRand::RNGs::Raw::isaac32x256::seed(Uint64 s) {//LOCKED, do not change
 	state[0] = Uint32(s);
 	state[1] = Uint32(s>>32);
 	for (int i = 2; i < SIZE; i++) state[i] = 0;
+	_seed(true);
+}
+void PractRand::RNGs::Raw::isaac32x256::seed(vRNG *seeder_rng) {//LOCKED, do not change
+	for (int i = 0; i < SIZE; i += 2) {
+		state[i] = seeder_rng->raw32();
+		state[i + 1] = 0;
+	}
 	_seed(true);
 }
 void PractRand::RNGs::Raw::isaac32x256::walk_state(StateWalkingObject *walker) {
@@ -238,6 +247,13 @@ void PractRand::RNGs::Raw::isaac64x256::seed(Uint64 s) {//LOCKED, do not change
 	//(which can't be used directly since it takes a non-standard seed structure)
 	state[0] = s;
 	for (int i = 1; i < SIZE; i++) state[i] = 0;
+	_seed(true);
+}
+void PractRand::RNGs::Raw::isaac64x256::seed(vRNG *seeder_rng) {//LOCKED, do not change
+	for (int i = 0; i < SIZE; i += 2) {
+		state[i] = seeder_rng->raw64();
+		state[i + 1] = 0;
+	}
 	_seed(true);
 }
 void PractRand::RNGs::Raw::isaac64x256::walk_state(StateWalkingObject *walker) {

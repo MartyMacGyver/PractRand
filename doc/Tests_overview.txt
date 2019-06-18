@@ -12,7 +12,9 @@
 1.B.2 - RNG_test results in more detail
 1.B.3 - Notes on RNG_test p-values
 1.B.4 - TestResult objects from calling PractRand directly
-1.B.5 - Misc PractRand test result quality notes:
+1.B.5 - Misc PractRand test result quality notes
+1.B.6 - Metatests performed on PractRand p-values
+1.B.7 - What specific failures might mean about a PRNG
 
 2. General Discussion of RNG Testing
 
@@ -178,13 +180,13 @@ An example results chart showing one of each category of result:
 
 1.B.5 - TestResult objects from calling PractRand directly
 PractRand tests natively produce sets of results of type 
-PractRand::TestResult.  Each of these object corresponds to a 
+PractRand::TestResult.  Each of these objects correspond to a 
 subtest result.  The simplest thing to do with them is call their 
 get_pvalue() method.  See tests.h for for details on their 
 interface, or RNG_test.cpp for examples of more complicated things 
 you can do with them.  
 
-1.B.6 - Misc PractRand test result quality notes:
+1.B.5 - Misc PractRand test result quality notes:
 The various tests within PractRand vary widely in terms of the 
 quality of p-values they produce - the tests used in the normal test 
 set tend to produce cleaner p-values than other tests in PractRand, 
@@ -231,7 +233,7 @@ bonuses they enjoy thusly are slightly offset by non-orthogonality
 penalties, but only slightly.  The strongest correlation that is 
 not a byproduct of a major efficiency boost is that between 
 DC6-9x1Bytes-1 and BCFN(2,whatever), which is only a slight 
-correlation).  
+correlation)
 
 The expanded test set is not very orthogonal at all - many of its 
 tests are strongly correlated with each other.  
@@ -255,6 +257,61 @@ of the same RNG output and thus have some degree of correlation.
 Normally two consecutive results summaries have 50% overlap, producing 
 a substantial degree of correlation, but that can vary with the 
 command line parameters used.  
+
+1.B.7 - What specific failures might mean about a PRNG
+
+Failures on test names that begin with [Low1/??] (replacing the ?? 
+with 8, 16, 32, or 64) typically mean low-bit issues - not enough 
+right-ward mixing (barrel shifts and right-shifts mainly, though also 
+table-lookups and some more complex / slower math) in the PRNG.  
+However, there are other possibilities - it could be that the bit 
+focused on didn't need to be the lowest bit, it just had to be one bit 
+per word to emphasize the relationship at that particular spacing.  
+
+Simultaneous failures on multiple unrelated tests often means that the 
+PRNGs cycle length was exhausted, or it otherwise changed behaviors to 
+something awful near the end of testing.  
+
+Failures on short-ranged tests, especially DC6 parameterizations, are 
+typical of small chaotic PRNGs with insufficient mixing / avalanche.  
+Failures on FPF parameterizations can have similar meaning.  However, 
+both of those find bias in a wide variety of PRNGs, sometimes for 
+non-obvious reasons.  
+
+BCFN failures where the first parameter listed is high (say, 5 or 
+more) typically reflect a cyclic buffer being traversed, where 
+patterns in the content of that buffer show up at specific spacings.  
+On the other hand, BCFN failures where the first parameter listed is 
+low are typically similar in meaning to a failure on a DC6 
+parameterization (see the previous paragraph).  Note that when I 
+refer to the value of the first BCFN parameter, I'm refering to the 
+evaluated value listed in the output, meaning that for a test result 
+listed under "BCFN(2+3,13-1)" the first parameter would be 5 (2+3).  
+
+Gap16 failures with p-values near 1 generally mean that the PRNG 
+output was too regular, typically reflecting a single-cycle PRNG 
+nearing the end of its cycle length.  Those with p-value near zero on 
+the other hand indicate that some values showed up at more extreme 
+spacings than expected, seen most often on single-cycle PRNGs and 
+sometimes on rc4-like PRNGs.  
+
+Failures on BRank suggest that in some way the PRNG output, or at 
+least part of it, was extremely linear, producable strictly by xoring 
+bits of previous PRNG output.  This is classically seen on LFSRs / 
+GFSRs, but sometimes it shows up on PRNGs that are *supposed* to be 
+chaotic, but actually have some component that isn't really.  
+
+Most failures on the core tests (other thatn BRank) should have 
+started small and gotten steadily worse as more bytes were tested 
+until failure was reached.  Thus, if "FAIL" was reported at 2**36 
+bytes then at the previous results summary (at 2**35 bytes) there 
+should have been some kind of anomaly on the same subtest, maybe a 
+"suspicious" or "very suspicious" test result.  If there was no 
+preceding warning and the failure was particularly extreme, that may 
+mean that the RNG somehow worsened its behavior in some way shortly 
+before the failure was reported, similar to exhausting the cycle 
+length, but perhaps in some way detectable to only one of the tests 
+in PractRand.  
 
 
 ***********************************************************************
@@ -319,7 +376,7 @@ produce a fail result).
 
 Typically p-value calculations are not 100% accurate (ie not 100% 
 uniformly distributed between 0 and 1 on truly random data).  Instead they 
-have subtle and potentially complex patterns of deviations from uniform.  
+have subtle and potentially complex patterns of deviations from uniformity.
 In some cases these inaccuracies are insignificant, in other cases they 
 are very important.  
 
@@ -354,6 +411,19 @@ Unfortunately, that does not take in to account inaccuracies in the
 calculations of the p-value, which can have large effects on false- 
 positive rates.  
 
+(In PractRand, the target false-positive rate is done on a 
+per-results-summary basis rather than the usual per-p-value basis, 
+and is currently set so that approximately one in 300 million result 
+summaries should show a false positive, meaning that if 300 million 
+result summaries are produced from testing good PRNGs, approximately 
+1 results summary would include a "FAIL" evaulation.  At that rate, 
+if you have PractRand producing a results summary every 2 seconds, 
+it would take an average of 20 CPU-years to produce a single 
+false-positive.  In practice however, because of biases in 
+PractRand's p-values, the actual false-positive rate should be 
+substantially lower than that when working with the standard test 
+set.)
+
 3.C - Knowing the false-positive rates is important
 
 The important point of test evaluation is that you need to be aware of 
@@ -379,6 +449,17 @@ number of times can undermine reproducibility to a surprising degree,
 while running them a constant number of times can slow things down more 
 than you might expect if your desired effective false positive rate is 
 extremely low.  This sort of thing is a type of metatest.  
+
+(PractRand attempts to set its false-positive rate for "FAIL" messages 
+low enough to make it unlikely that any user will ever see a false-
+positive from it.  The effectiveness of this strategy is limited by 
+two things: 1. I did say "attempts" to set the false-positive rate 
+that low.  In practice, for the standard test set, I think I've even 
+succeeded.  The expanded test set, and tests not used in either, 
+don't necessarily meet the same standards though.  2. users rightly 
+pay attention to the number of less extreme result evaluations as 
+well, as a kind of informal done-by-eye metatest, for which there is 
+no quantified false-positive rate.)
 
 3.D - Metatests
 
@@ -423,13 +504,25 @@ that all inter- p-value correlations be completely understood,
 which is generally only possible if all such correlations are 
 indistinguishable from zero).  
 
+(PractRand does not encourage the use of metatests by end 
+users; metatests are used in the validation and calibration 
+of PractRand subtests though.)
+
 
 ***********************************************************************
 4. Brief Reviews of Non-PractRand Test Suites
 ***********************************************************************
 
+gjrand:
+	Very good.  As good as PractRand, perhaps even a hair better.  
+	I've only used it on linux, I suspect a windows build would be difficult.  
+	Handles all types of RNGs well in my experience.  
+	DO NOT RUN MULTIPLE TESTS AT ONCE.  It will silently fail, producing incorrect results.  
+
+	I pipe my data in to it.  I think that's the way it's intended to be used.  
+
 TestU01:
-	Very good.  
+	Good, but not as good as PractRand or gjrand in my experience.  
 	Difficult to build on windows.  
 	Slightly worse on chaotic PRNGs than non-chaotic PRNGs.  
 	I recommend its SmallCrush, Crush, and BigCrush batteries of tests.  
@@ -438,29 +531,31 @@ TestU01:
 	in data too.  
 
 RaBiGeTe:
-	If the new version is out yet it's pretty decent (I've been using a pre-release copy).  
+	If the new version is out yet it's okay (I've been using a pre-release copy), not as good as TestU01 or PractRand or gjrand but sometimes worth using.  
 	Windows only, recent versions are closed-source.  
 	Does not need many bits - a big bonus on slow PRNGs.  
-	Much worse on chaotic PRNGs than non-chaotic PRNGs.  
-	Lots of bit-level tests good for slow non-byte-oriented PRNGs.  
-	Numerous bugs and presentation issues, but no show-stoppers.  
-	I recommend its rank tests - the arrangement of near-power-of-2 parameterizations it uses seems to work better than competitors choices.  
+	Much worse on chaotic PRNGs than non-chaotic PRNGs.  It tends to work best in my experience on LCG-like PRNGs.  
+	Lots of bit-level tests, maybe good for slow non-byte-oriented PRNGs?  
+	Numerous minor bugs and presentation issues, but no show-stoppers.  
 
 	I compile my PRNGs in to .dll files for it, but you can also give 
 	it files.  
 
 Dieharder:
-	Not good, but parts show a lot of promise.  
+	Not good, but parts of it show promise.  
 	*nix-only.  
 	I *strongly* recommend using a customized set of tests for this, never the -a option.  
 	I recommend using the dab_ tests and only those tests.  
 	dab_monobit2 is the best test, dab_monobit2 + dab_dct is the best pair of tests.  
 	Adjust their sequence lengths.  Max out the possible sequence length on dab_monobit2 (it's a 32 bit signed value IIRC).  
+	Beware of false positives.  
 
 	I pipe in my PRNG output, but you can also link with Dieharder (it has a viral license for linking though IIRC)
 
 NIST STS:
-	Don't bother.  
+	Don't bother.  No, seriously, don't use this.  You have been warned.  
+	Beware of false positives.  
 
 Diehard:
-	Don't bother.  
+	Don't bother.  It's of historic value only, very badly outdated.  
+

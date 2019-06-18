@@ -1,3 +1,98 @@
+version 0.94
+	RNGs
+		xsm64
+			revised
+			old version was falling well short of intended quality on some seeds
+		xsm32
+			revised
+		efiix8x384 / efiix16x384 / efiix32x384 / efiix64x384
+			the large array sizes didn't realy help anything, so I shrunk them down to reduce memory & cache footprints
+			where the old iteration table size used to be 128, it's now 32
+			and where the old indirection table size used to be 256, it's now 16
+			so the names are now efiix8x48 instead of efiix8x384, efiix16x48 instead of efiix16x384, etc
+	tools
+		RNG_test
+			adjusted formating of raw outputs to better preserve columns during extreme failures
+			changed listed seed for "RNGs" that don't have meaningful seed
+			fixed off-by-1 bug causing evaluation thresholds to be slightly incorrect
+			added new evalution threshold "normalish" between "normal" and "unusual"
+			SeedingTester and EntropyPoolingTester meta-rngs that were only supported by command line options -ttseed64 and -ttep can now be specified as part of the RNG name
+		RNG_output
+			increased buffer size (again)
+			fixed endianness issue (again?)
+			now supports SeedingTester and EntropyPoolingTester meta-rngs
+			adjust to how very large Raw values are printed, to preserve column alignment
+	Test Batteries:
+		core tests:
+			added a new test, mod3n
+				it doesn't help on all that many PRNGs, but the ones it does help with it helps a lot
+				and it doesn't take much resources (largely because it's set up to only test a small fraction of the data stream)
+				this one is inspired the mod3 test in jgrand
+			added a new test, TMFn
+				it doesn't help on all that many PRNGs, but the ones it does help with it helps a lot
+				and it doesn't take much resources (largely because it's set up to only test a small fraction of the data stream)
+				this one primarily targets LCGs
+			FPF
+				removed "all2" subtest
+		expanded tests:
+			added a new test, mod3n
+			added a new test, TMFn
+			added a new test, BirthdaySystematic
+			various other changes?
+	tests
+		DistC6
+			fixed bug that effected the parameterizations used in the expanded test set
+				bug caused crashes on some platforms, had little to no effect on others
+		BRank
+			fixed semi-minor bug (again?)
+		transforms
+			FirstNofM
+				bugfixes; however, I don't think this was actually used anywhere in PractRand before, so probably nothing visible
+		mod3n
+			based upon the mod3 test in gjrand (by Geronimo Jones)
+			but it targets 8, 16, 32, 64, 128, etc bit blocks, all simultaneously, the same way BCFN does
+			it does not find bias in a very wide variety of PRNGs, but several of the ones catches are otherwise very difficult to find bias in (flea32x1, ara32, ibaa32)
+		TMFn
+			intended to catch LCGs.  I may replace it with a different test intended for the same purpose in a later version.
+	rng sets for testing
+		adding to ease testing automation
+version 0.93
+	RNGs
+		ALL RECOMMENDED RNGs!
+			added customized seeding-from-another-RNG code to every recommended RNG
+			on PRNGs with a statespace <= 2**128, it generally allows seeding to all states
+			on PRNGs with statespaces >= 2**256, it generally restricts seeding to a possible number of initial states around the square root of the statespace
+			on PRNGs with intermediate sizes, it goes somewhere in between
+			this is to allow probabilistic proofs of zero bad cycles for PRNGs where that is practical
+			also, the old generic seeding-from-an-RNG was not really desirable on recommended PRNGs, it was more of a quick-and-dirty solution
+		sfc16 / sfc32 / sfc64
+			improved shift constants (this changes the output sequences)
+			adjusted seeding
+		arbee
+			tweaked feed-in algorithms slightly yet again
+		efiix*
+			adjust seeding, yet again
+		non-recommended
+			added xoroshiro128plus
+			efiix variants were using the wrong algorithm
+	tools
+		RNG_test
+			changed thresholds slightly
+			multithreading fixes, particularly for unix platforms
+			bug fix for --ttep mode
+			increased buffer size for reading from stdin
+		RNG_output
+			increased buffer size
+			added the ability to use "inf" in place of the number of bytes requested
+			tweaked error messages, warning messages, usage messages, & documentation
+	Tests:
+		BRank
+			minor bug-fixes and adjustments to how extreme results are reported
+			32 bit executables now have smaller maximum matrix size than 64 bit executables, to minimize crashes related to exhausting address space
+		BCFN_FF
+			more conservative p-values for the ":freq" subtests (the p-values are still awful, but are now less likely to produce "suspicious" results on good PRNGs)
+		FPF
+			fix for the ":all" result on short test runs
 version 0.92
 	RNGs
 		non-recommended
@@ -14,7 +109,7 @@ version 0.92
 		BRank
 			fixed the part where it was slightly violating the abstraction layer
 		BCFN, BCFN_FF, BCFN_MT
-			improved accuracy of some calculations, which may help particularl long test runs
+			improved accuracy of some calculations, which may help particularly long test runs
 	documentation
 		added summary of NIST STS results to Test_results.txt
 version 0.91

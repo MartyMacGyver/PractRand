@@ -6,6 +6,10 @@ PractRand includes several programs that use the library to do useful things:
 	somewhere useful.  It has an optional third parameter to specify the seed 
 	to use.  The seed should be a 64 bit integer expressed in hexadecimal.  If 
 	no seed is specified it will pick one at random.  
+	The number of bytes to output can be replaced with "inf" (without the 
+	quotes) to cause it to emit random bytes indefinitely.  This is desirable 
+	if the output is being piped to a program and you don't know exactly how 
+	many bytes that program will use before closing the pipe.  
 		example - using the RNG named "jsf32", generate about 1.1 terabytes, 
 		using a randomly generated seed
 			./RNG_output jsf32 1234567890000
@@ -28,14 +32,14 @@ PractRand includes several programs that use the library to do useful things:
 		testing a file:
 			cat random_data_file | ./RNG_test stdin
 		testing data piped in from RNG_output:
-			./RNG_output jsf32 123456789000 | ./RNG_test stdin32
+			./RNG_output jsf32 inf | ./RNG_test stdin32
 	Sample command lines for use on windows:
 		testing a PractRand RNG:
 			RNG_test jsf32
 		testing a file:
-			type random_data_file | RNG_test stdin
+			RNG_test stdin < random_data_file
 		testing data piped in from RNG_output:
-			RNG_output jsf32 123456789000 | RNG_test stdin32
+			RNG_output jsf32 inf | RNG_test stdin32
 3. RNG_benchmark
 	Measures speeds of all recommended RNGs and all candidate RNGs.  
 	Candidate RNGs may get an unfair advantage depending upon how this 

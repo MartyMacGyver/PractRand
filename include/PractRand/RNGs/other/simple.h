@@ -32,6 +32,20 @@ namespace PractRand {
 					std::string get_name() const;
 					void walk_state(StateWalkingObject *);
 				};
+				class xsaltd16x3 : public vRNG16 {
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class xsalte16x3 : public vRNG16 {
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
 				//xorshift RNGs, a subset of LFSRs proposed by Marsaglia in 2003
 				class xorshift32 : public vRNG32 {
 					//constants those Marsaglia described as "one of my favorites" on page 4 of his 2003 paper
@@ -102,6 +116,22 @@ namespace PractRand {
 					Uint32 x,y,z,w,v,d;
 				public:
 					Uint32 raw32();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class xoroshiro128plus : public vRNG64 {
+					// from David Blackman and Sebastiano Vigna (vigna@acm.org), see http://vigna.di.unimi.it/xorshift/
+					Uint64 state0, state1;
+				public:
+					Uint64 raw64();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class xoroshiro128plus_2p64 : public vRNG64 {
+					// as xoroshiro128plus, but it skips 2**64-1 outputs between each pair of outputs (testing its recommended parallel sequences)
+					Uint64 state0, state1;
+				public:
+					Uint64 raw64();
 					std::string get_name() const;
 					void walk_state(StateWalkingObject *);
 				};
@@ -296,6 +326,128 @@ namespace PractRand {
 					Uint32 raw32();
 					std::string get_name() const;
 					void walk_state(StateWalkingObject *);
+				};
+				class murmlacish : public vRNG32 {
+					Uint32 state1, state2, state3;
+				public:
+					Uint32 raw32();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+
+				class gjishA : public vRNG16 {
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();//broadly similar to gjrand, but 16 bit and no counter
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class gjishB : public vRNG16 {
+					Uint16 a, b, c, counter;
+				public:
+					Uint16 raw16();//broadly similar to gjrand, but 16 bit
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class gjishC : public vRNG32 {
+					Uint32 a, b, c;
+				public:
+					Uint32 raw32();//broadly similar to gjrand, but 32 bit, no counter, and no 3rd shift
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class gjishD : public vRNG32 {
+					Uint32 a, b, c;
+				public:
+					Uint32 raw32();//broadly similar to gjrand, but 32 bit, no counter
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class ara16 : public vRNG16 {//add, bit rotate, add
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class ara32 : public vRNG32 {//add, bit rotate, add
+					Uint32 a, b, c;
+				public:
+					Uint32 raw32();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class arx16 : public vRNG16 {//add, bit rotate, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class arx32 : public vRNG32 {//add, bit rotate, xor
+					Uint32 a, b, c;
+				public:
+					Uint32 raw32();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class hara16 : public vRNG16 {//heterogenous add, bit rotate, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class harx16 : public vRNG16 {//heterogenous add, bit rotate, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class learx16 : public vRNG16 {//LEAs, bit rotates, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class hlearx16 : public vRNG16 {//heterogenous LEAs, bit rotates, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class alearx16 : public vRNG16 {//add, LEA, bit rotate, xor
+					Uint16 a, b, c;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class arac16 : public vRNG16 {//add, bit rotate, add (with counter)
+					Uint16 a, b, c, counter;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class arxc16 : public vRNG16 {//add, bit rotate, xor (with counter)
+					Uint16 a, b, c, counter;
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *);
+				};
+				class rarns16 : public vRNG16 {
+					Uint16 xs1, xs2, xs3, history;
+					enum { S1 = 3, S2 = 7, S3 = 8 };//3,7,8
+				public:
+					Uint16 raw16();
+					std::string get_name() const;
+					void walk_state(StateWalkingObject *walker);
+					void seed(Uint64 s);
 				};
 			}
 		}

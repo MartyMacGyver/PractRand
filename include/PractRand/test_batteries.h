@@ -24,45 +24,47 @@ namespace PractRand {
 			void destruct_tests(const ListOfTests &tests);
 
 			//gets a battery of of tests
-			//parameters:
-			//  rng
-			//      RNG metadata effects which tests/foldings are used
-			//      may be NULL to disregard RNG metadata and use default tests/foldings
-			//  expanded_test_set
-			//      if 0, PractRand will favor speed over sensitivity
-			//      if 9 it will favor sensitivity over speed
-			//      at intermediate values it may produce intermediate results
-			//  folding_level
-			//      if 0, PractRand will test only raw RNG output
-			//      if 1, it will focus additional effort on the lowest bits of the RNG output (recommended)
-			//      if 2 or more it will test additional transforms of the PRNG output
-			//ListOfTests get_test_battery(const RNGs::vRNG *rng, int expanded_test_set = 0, int folding_level = 1);
+			//
+			// notes:
+			//    bits
+			//        bits is the number of bits produced at a time by the targetted PRNG
+			//        its value can normally be produced with a call to vRNG::get_native_output_size()
+			//    folding
+			//        folding refers to the process by which additional datastreams are constructed from subsets of the original datastream
+			//        each datastream, including the original (raw PRNG output) gets its own copy of the tests working on it
+			//
+			//core test set without folding:
+			//    get_core_tests();
+			//
+			//core test set with standard folding:
+			//    apply_standard_folding(bits, get_core_tests);
+			//
+			//core test set with extended folding:
+			//    apply_extended_folding(get_core_tests);
+			//
+			//expanded test set without folding
+			//    get_expanded_core_tests();
+			//
+			//expanded test set with standard folding
+			//    apply_standard_folding(bits, get_expanded_core_tests);
+			//
+			//expanded test set with extended folding
+			//    apply_extended_folding(get_expanded_core_tests);
+			//
 
 			//recommended tests
-			//recommended data transformations
-			//(which data transforms are recommended is a function of RNG metadata)
-			ListOfTests get_standard_tests(const RNGs::vRNG *rng);
-
-			//recommended tests
-			//no data transformations
 			ListOfTests get_core_tests();
 
-			//recommended tests
-			//extra data transformations
-			ListOfTests get_folded_tests();
-
 			//extra tests
-			//no data transformations
 			ListOfTests get_expanded_core_tests();
 
-			//extra tests
-			//recommended data transformations
-			//(which data transforms are recommended is a function of RNG metadata)
-			ListOfTests get_expanded_standard_tests(const RNGs::vRNG *rng);
+			//apply standard foldings to a test set:
+			ListOfTests apply_standard_foldings(int bits, ListOfTests(*base_tests)());
+			ListOfTests apply_standard_foldings(const RNGs::vRNG *rng, ListOfTests(*base_tests)());
+			//note: there is specific behavior for 8 bit, 16 bit, 32 bit, and 64 bit cases ; any other value produces an alternate "unknown format" targetted folding
 
-			//extra tests
-			//extra data transformations
-			ListOfTests get_expanded_folded_tests();
+			//apply extended foldings to a test set:
+			ListOfTests apply_extended_foldings(ListOfTests(*base_tests)());
 
 		}//Batteries
 	}//Tests

@@ -37,7 +37,7 @@ Recommended tests:
 		parameter is a log-scale amount of time per gigabyte it 
 		spends calculating matrix ranks.  
 		Due to the coarse-grained nature of the results it 
-		produces, precise p-values are impossible for most of 
+		produces, precise p-values are impossible for many of 
 		its subtests.  
 	FPF - "floating point frequency" test; contrary to the name 
 		it's purely integer math.  Can be slow on some settings.  

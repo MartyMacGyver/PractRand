@@ -320,6 +320,34 @@ namespace PractRand {
 
 			return sum / std::sqrt(total);
 		}
+		double my_test(unsigned long categories, const double *prob_table, const Uint64 *counts) {
+			double score_actual = 0;
+			double score_mean = 0;
+			//double score_mean_sqr = 0;
+			double prob_sum = 0;
+			Uint64 total = 0;
+			for (unsigned long i = 0; i < categories; i++) {
+				double score = prob_table[i] > 0 ? -std::log(prob_table[i]) : 999.0;
+				score_mean += prob_table[i] * score;
+				//score_mean_sqr += prob_table[i] * score * score;
+				prob_sum += prob_table[i];
+			}
+			score_mean /= prob_sum;
+			//score_mean_sqr /= prob_sum;
+			double score_deviation = 0;
+			for (unsigned long i = 0; i < categories; i++) {
+				double score = prob_table[i] > 0 ? -std::log(prob_table[i]) : 999.0;
+				score -= score_mean;
+				score_deviation += score * score * prob_table[i];
+				score_actual += score * counts[i];
+				total += counts[i];
+			}
+			score_deviation = std::sqrt(score_deviation * total);
+			double score_normalized = score_actual;
+			//score_normalized -= score_mean * total;
+			score_normalized /= score_deviation;
+			return score_normalized;
+		}
 		double g_test(unsigned long categories, const double *prob_table, const Uint64 *counts) {
 			long double total = 0;
 			long double sum = 0;
@@ -342,16 +370,17 @@ namespace PractRand {
 			sum -= total * std::log(double(total) / double(categories));
 			return (double)sum * 2.0;
 		}
-		double g_test_flat_merge_normal ( unsigned long categories, const Uint64 *counts, Uint64 total ) {
+		double g_test_flat_merge_normal(unsigned long categories, const Uint64 *counts, Uint64 total, double target_ratio) {
+			if (categories < 2) return 0;
 			if (total == Uint64(-1)) {
 				total = 0;
 				for (unsigned long i = 0; i < categories; i++) total += counts[i];
 			}
 			if (!total) return 0;
-			if (categories < 2) return 0;
+
 			double ratio = total / double(categories);
-			unsigned long merge = int(std::ceil(32.0 / ratio));
-			if (merge >= categories) merge = (categories + 1) / 2;
+			unsigned long merge = int(std::ceil(target_ratio / ratio));
+			if (merge > categories/2) merge = (categories + 1) / 2;
 			long double sum = 0;
 			unsigned long max = categories - merge;
 			Uint64 so_far = 0;
@@ -372,18 +401,60 @@ namespace PractRand {
 			if (observed != total - so_far) issue_error("g_test_flat_merge called with bad total");
 			if (observed) sum += observed * std::log( observed / (ratio * cat_left));
 			sum *= 2.0;
-			return math_chisquared_to_normal(sum, std::ceil(categories / double(merge))-1);
+			return math_chisquared_to_normal(sum, ((categories+merge-1) / merge)-1);
 		}
 
-		static double math_factorial ( double a ) {
+		double math_factorial(double a) {
 			//only an aproximation, but a decent one
 			if (!a) return 1;
-			static double halfL2Pi = log(3.14159265358979 * 2)/2;
-			static double halfLPi = log(3.14159265358979)/2;
-			double L = log(a);
-			double r = a * (L - 1) + log(a * (1 + 4 * a * (1 + 2 * a)))/6 + halfLPi;
-		//	double r = a * (L - 1) + L/2 + halfL2Pi;
+			static double halfL2Pi = std::log(3.14159265358979 * 2) / 2;
+			static double halfLPi = std::log(3.14159265358979) / 2;
+			double L = std::log(a);
+			double r = a * (L - 1) + std::log(a * (1 + 4 * a * (1 + 2 * a))) / 6 + halfLPi;
+			//	double r = a * (L - 1) + L/2 + halfL2Pi;
 			return exp(r);
+		}
+		double math_factorial_log(Uint64 a) {
+			//only an aproximation, but a decent one
+			//double actual = 0;
+			/*if (a <= 1) return 0;
+			else if (a <= 16) {
+				Uint64 f = 1;
+				for (int i = 2; i <= a; i++) {
+					f *= i;
+				}
+				return std::log(double(f));
+				//actual = std::log(double(f));
+			}*/
+			if (a < 32) {
+				static const double lookup[32] = {//values found here: https://www.johndcook.com/blog/csharp_log_factorial/
+					0.000000000000000, 0.000000000000000, 0.693147180559945, 1.791759469228055,    //0-3
+					3.178053830347946, 4.787491742782046, 6.579251212010101, 8.525161361065415,    //4-7
+					10.604602902745251, 12.801827480081469, 15.104412573075516, 17.502307845873887,//8-11
+					19.987214495661885, 22.552163853123421, 25.191221182738683, 27.899271383840894,//12-15
+					30.671860106080675, 33.505073450136891, 36.395445208033053, 39.339884187199495,//16-19
+					42.335616460753485, 45.380138898476908, 48.471181351835227, 51.606675567764377,//20-23
+					54.784729398112319, 58.003605222980518, 61.261701761002001, 64.557538627006323,//24-27
+					67.889743137181526, 71.257038967168000, 74.658236348830158, 78.092223553315307,//28-31
+				};
+				return lookup[a];
+			}
+			static double halfL2Pi = std::log(3.14159265358979323 * 2) / 2;
+			/*static double halfLPi = std::log(3.14159265358979323) / 2;
+			double L = std::log(a);
+			double r = a * (L - 1) + std::log(a * (1 + 4 * a * (1 + 2 * a))) / 6 + halfLPi;
+			//return r;*/
+			//	double r = a * (L - 1) + L/2 + halfL2Pi;
+
+			a += 1;//this is an approximation of the gamma function rather than factorial, so add 1
+			//algorithm found here: https://www.johndcook.com/blog/2010/08/16/how-to-compute-log-factorial/
+			double inv = 1.0 / a;
+			double rv = (a - 0.5) * std::log(a) - a + halfL2Pi;
+			double inv2 = inv * inv;
+			rv += (1.0 / 12) * inv;
+			rv -= (1.0 / 360) * (inv * inv2);
+			rv += (1.0 / 1260) * (inv * inv2 * inv2);
+			return rv;
 		}
 		static double math_harmonic_series(int n) {
 			if (n > 1000) return std::log(double(n)) + 0.57721566490153286;
@@ -392,24 +463,80 @@ namespace PractRand {
 			return sum;
 		}
 		static double math_erf ( double a ) {
-			double scale = 2 / std::sqrt(3.14159265358979);
-			double a2 = a*a;
-			double x = a2*a;
-			//double f = 1;
-			double r = a - x / 3;
-			int i = 1;
-			while (x > 0.000000000000000001) {
-				x *= a2;
-				x /= i*2;
-				r += x / (4.0 * i + 1);
-				x *= a2;
-				x /= i*2+1;
-				r -= x / (4.0 * i + 3);
-				i++;
+			if (a < 0) return -math_erf(-a);
+			if (a < 8) {
+				double scale = 2 / std::sqrt(3.14159265358979323);
+				double a2 = a*a;
+				double x = a2*a;
+				//double f = 1;
+				double r = a - x / 3;
+				int i = 1;
+				while (x > 0.000000000000000001) {
+					x *= a2;
+					x /= i * 2;
+					r += x / (4.0 * i + 1);
+					x *= a2;
+					x /= i * 2 + 1;
+					r -= x / (4.0 * i + 3);
+					i++;
+				}
+				return scale * r;
 			}
-			return scale * r;
+			else return 1;
 		}
-		static double math_inverse_erf ( double x ) {
+		static double math_erfcx(double x) {//scaled complementary error function, may have the wrong scale or otherwise be wonky?
+			//*
+			//found this on stackoverflow, http://stackoverflow.com/questions/34723644/scaled-complementary-error-function-erfcxx-computation-avoiding-arithmetic-o
+			//seems to work well
+
+			if (x < 0) issue_error("math_erfcx(negative parameter)");
+			if (x < 2) return (1 - math_erf(x)) * std::exp(x * x);
+			double x2 = x * x;
+			double a = 0, b = x2, c = x2, d = 0, e = 0, f = x2;
+			for (double i = 1; i < 500; i += 1.0) {
+				a = i - 0.5;
+				b = 1;
+				d = 1 / (b + a * d);
+				c = b + a / c;
+				e = c * d;
+				f = f * e;
+				if (e == 1) break;
+				a = i;
+				b = x2;
+				d = 1 / (b + a * d);
+				c = b + a / c;
+				e = c * d;
+				f = f * e;
+				if (e == 1) break;
+			}
+			return x / f / std::sqrt(3.14159265358979);
+			// */
+
+			//a closed form approximation, from "Closed-form approximations to the Error and Complementary Error Functions and their applications in atmospheric science"
+			//const double k = 2.7749;
+			//return k / ((k - 1) * std::sqrt(3.14159265358979 * x * x) + std::sqrt(3.14159265358979 * x * x + k * k));
+
+			/*
+			// found this in the same paper, supposedly good for (x > 1+(small amount)), but it does not converge... probably I misinterpretted something
+
+			double old = 0;
+			double iterative = 1.0;
+			double product = 1.0;
+			double base = 2.0 * x * x;
+			double e = base;
+			double multiplier = 3;
+			int i = 1;
+			while (std::fabs(old - iterative) > 0.00000000000001) {
+				double tmp = -product / e;
+				e *= base; product *= multiplier; multiplier += 2;
+				tmp += product / e;
+				e *= base; product *= multiplier; multiplier += 2;
+				old = iterative;
+				iterative += tmp;
+			}
+			return iterative / std::sqrt(3.14159265358979 * x);*/
+		}
+		static double math_inverse_erf(double x) {
 			if (x < 0) return -math_inverse_erf(-x);
 			if (x > 1) {
 				issue_error("inverse_erf: invalid input\n");
@@ -508,6 +635,15 @@ namespace PractRand {
 				chisquared /= step;
 			}
 			return chisquared;
+		}
+		double math_normaldist_to_suspicion(double norm) {
+			if (norm < 0) return -math_normaldist_to_suspicion(-norm);
+			norm *= std::sqrt(0.5);
+			double scaled = math_erfcx(norm);
+			double scale = norm * norm;
+			double ec = 1 - math_erf(norm);
+			double l = (std::log(scaled) - scale) / std::log(2.0);
+			return -(l + 0);
 		}
 		double math_normaldist_to_pvalue(double norm) {
 			/*double r;

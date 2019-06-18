@@ -103,6 +103,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <PostBuildEvent>
       <Command>
@@ -165,6 +166,7 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\math.cpp" />
     <ClCompile Include="..\src\non_uniform.cpp" />
     <ClCompile Include="..\src\platform_specifics.cpp" />
     <ClCompile Include="..\src\rand.cpp" />

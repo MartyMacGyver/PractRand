@@ -22,7 +22,8 @@ namespace PractRand {
 				~efiix8x384();
 				Uint8 raw8();
 				void seed(Uint64 s1, Uint64 s2, Uint64 s3, Uint64 s4);
-				void seed(Uint64 s) {seed(s,0,0,0);}
+				void seed(Uint64 s) {seed(s,s,s,s);}
+				void seed(vRNG *source_rng);
 				void walk_state(StateWalkingObject *walker);
 //				static void self_test();
 			};
@@ -33,6 +34,7 @@ namespace PractRand {
 				PRACTRAND__POLYMORPHIC_RNG_BASICS_H(efiix8x384)
 				void seed(Uint64 s1, Uint64 s2, Uint64 s3, Uint64 s4);
 				void seed(Uint64 s);
+				void seed(vRNG *source_rng);
 			};
 		}
 		PRACTRAND__LIGHT_WEIGHT_RNG(efiix8x384)

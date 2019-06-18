@@ -39,6 +39,10 @@ using namespace PractRand;
 
 PractRand::RNGs::Polymorphic::hc256 known_good(PractRand::SEED_AUTO);
 
+//for access to some functions the dummy PRNG might want to use:
+#include "PractRand/rng_internals.h"
+
+
 //helpers for the test programs, to deal with RNG names, test usage, etc
 #include "RNG_from_name.h"
 
@@ -62,28 +66,75 @@ double get_time_period() { return 1.0 / CLOCKS_PER_SEC; }
 
 /*
 A minimal RNG implementation, just enough to make it usable.  
-Deliberately flawed, though still better than most platforms default RNGs
+Deliberately flawed, though still better than many platforms default RNGs
 */
 
 //#include "PractRand/endian.h"
 
-class DummyRNG : public PractRand::RNGs::vRNG32 {
+struct BitPermutator {
+	//Uint32 lookup32_0[256], lookup32_1[256], lookup32_2[256], lookup32_3[256];
+	//Uint32 permutate_value32(Uint32 value)
+	Uint16 lookup16[2][256];
+	Uint16 permutate_value16(Uint16 value) { return lookup16[0][value & 255] | lookup16[1][value >> 8]; }
+	void init(PractRand::RNGs::vRNG *seeder_rng) {
+		int bits[16];
+		for (int i = 0; i < 16; i++) bits[i] = i;
+		for (int i = seeder_rng->raw8() + 256; i > 0; i--) {
+			int a, b; a = seeder_rng->raw8() & 15; b = seeder_rng->raw8() & 15;
+			int tmp = bits[a]; bits[a] = bits[b]; bits[b] = tmp;
+		}
+		for (int t = 0; t < 2; t++) for (int i = 0; i < 256; i++) { lookup16[t][i] = 0; }
+		for (int old_bp = 0; old_bp < 16; old_bp++) {
+			int new_bp_value = 1 << bits[old_bp];
+			for (int i = 0; i < 256; i++) if ((i >> (old_bp & 7)) & 1) lookup16[old_bp >> 3][i] |= new_bp_value;
+		}
+	}
+};
+BitPermutator permutator;
+
+class DummyRNG : public PractRand::RNGs::vRNG16 {
 public:
 	//declare state
 	Uint32 x, y, z, index;
+	//and any helper methods you want:
+	static Uint16 rotate16(Uint16 v, int bits) { return (v << bits) | (v >> (16 - bits)); }
+	static Uint32 rotate32(Uint32 v, int bits) { return (v << bits) | (v >> (32 - bits)); }
 	//implement algorithm
-	Uint32 raw32() {
-		x += index++;
-		y += x;
-		z += y ^ index;
-		return z;
+	Uint16 raw16() {
+		//x += z ^ index++;
+		//y += x ^ z;
+		//z += y ^ (y >> 24);
+		//return z;
+
+		y ^= x;
+		x = rotate16(x, 14);
+		x ^= (y << 2) ^ y;
+		y = rotate16(y, 7);
+		//return x + y;
+		//return rotate16(x + y, 6) + x;
+		//return permutator.permutate_value16(x + y) + y;
+		return permutator.permutate_value16(permutator.permutate_value16(x+y) + y);
+		//return rotate16(x ^ (y + ((y) << 3)), 9) + (x ^ (x >> 4));
+		//return rotate16(x, 6) ^ rotate16(x, 9) ^ x;
+		//Uint16 tmp = x + y; tmp = rotate16(tmp, 6) ^ rotate16(tmp, 9) ^ tmp; return rotate16(tmp, 6) + x;
 	}
 	//allow PractRand to be aware of your internal state
+	//uses include: default seeding mechanism (individual PRNGs can override), state serialization/deserialization, maybe eventually some avalanche testing tools
 	void walk_state(PractRand::StateWalkingObject *walker) {
 		walker->handle(x);
 		walker->handle(y);
 		walker->handle(z);
 		walker->handle(index);
+	}
+	//seeding from integers
+	//not actually necessary, in the absence of such a method a default seeding-from-integer path will use walk_state to randomize the member variables
+	//note that a separate path exists for seeding-from-another-PRNG
+	void seed(Uint64 s) {
+		permutator.init(&known_good);
+		x = y = z = s;
+		y = s >> 32;
+		//for (int i = 0; i < 6; i++) raw32();
+		index = 0;
 	}
 	//any name you want
 	std::string get_name() const {return "DummyRNG";}
@@ -100,7 +151,7 @@ public:
 double print_result(const PractRand::TestResult &result, bool print_header = false) {
 	if (print_header) std::printf("  Test Name                         Raw       Processed     Evaluation\n");
 	//                                     10        20        30        40        50        60        70        80
-	std::printf("  ");
+	std::printf("  ");//2 characters
 	//NAME
 	if (true) {// 34 characters
 		std::printf("%s", result.name.c_str());
@@ -111,11 +162,13 @@ double print_result(const PractRand::TestResult &result, bool print_header = fal
 	//RAW TEST RESULT
 	if (true) {// 10 characters?
 		double raw = result.get_raw();
-		if (raw < 999.95) std::printf("R=%+6.1f ", raw);
-		else std::printf("R=%+6.0f ", raw);
-		if (fabs(raw) < 99999.5) std::printf(" ");
-		//if (fabs(raw) < 999999.5) std::printf(" ");
-		//if (fabs(raw) < 9999999.5) std::printf(" ");
+		if (raw > 99999.0) std::printf("R>+99999  ");
+		else if (raw < -99999.0) std::printf("R<-99999  ");
+		else if (std::fabs(raw) < 999.95) std::printf("R=%+6.1f  ", raw);
+		else std::printf("R=%+6.0f  ", raw);
+		//if (std::fabs(raw) < 99999.5) std::printf(" ");
+		//if (std::fabs(raw) < 999999.5) std::printf(" ");
+		//if (std::fabs(raw) < 9999999.5) std::printf(" ");
 	}
 
 	//RESULT AS A NUMERICAL "SUSPICION LEVEL" (log of distance from pvalue to closest extrema)
@@ -195,7 +248,7 @@ double print_result(const PractRand::TestResult &result, bool print_header = fal
 	}
 
 	double dec = std::log(2.) / std::log(10.0);
-	double as = (std::fabs(result.get_suspicion()) + 1) * dec;
+	double as = (std::fabs(result.get_suspicion()) + 1 - 1) * dec;// +1 for suspicion conversion, -1 to account for there being 2 failure regions (near-zero and near-1)
 	double wmod = std::log(result.get_weight()) / std::log(0.5) * dec;
 	double rs = as - wmod;
 	//double ap = std::fabs(0.5 - result.get_pvalue());
@@ -227,221 +280,32 @@ double print_result(const PractRand::TestResult &result, bool print_header = fal
 		else if (rs >8.5) std::printf("  FAIL           ");
 		else if (rs >6.0) std::printf(" VERY SUSPICIOUS ");
 		else if (rs >4.0) std::printf("very suspicious  ");
-		else if (rs >2.5) std::printf("suspicious       ");
+		else if (rs >3.0) std::printf("suspicious       ");
+		else if (rs >2.0) std::printf("mildly suspicious");
 		else if (rs >1.0) std::printf("unusual          ");
+		else if (rs >0.0) std::printf("normalish       ");
 		else              std::printf("normal           ");
 	}
 	std::printf("\n");
 	return rs;
 }
 
-class Seeder_MetaRNG : public PractRand::RNGs::vRNG64 {
-public:
-	PractRand::RNGs::vRNG *base_rng;
-	Uint64 current_seed;
+#include "SeedingTester.h"
 
-	std::set<Uint64> unordered_history;
-	std::deque<Uint64> history;
-	int history_limit;
-
-	Seeder_MetaRNG(PractRand::RNGs::vRNG *base_rng_, int history_limit_=1024) : history_limit(history_limit_) {
-		base_rng = base_rng_;
-		current_seed = known_good.raw64();
-		record_seed(current_seed);
-	}
-	~Seeder_MetaRNG() {delete base_rng;}
-	bool record_seed(Uint64 new_seed) {
-		if (!unordered_history.insert(new_seed).second) return false;
-		current_seed = new_seed;
-		history.push_back(current_seed);
-		if (history.size() > history_limit) {
-			unordered_history.erase(history.front());
-			history.pop_front();
-		}
-		return true;
-	}
-	void evolve_seed() {
-		Uint64 bits_tried = 0;
-		while (true) {
-			Uint64 bit = 1ull << known_good.randi(64);
-			Uint64 new_seed = current_seed ^ bit;
-			bits_tried |= bit;
-			if (record_seed(new_seed)) return;
-			if (0 == ~bits_tried) {
-				while (true) {
-					if (record_seed(known_good.raw64())) return;
-				}
-			}
-		}
-	}
-	Uint64 raw64() {
-		base_rng->seed(current_seed);
-		Uint64 rv = base_rng->raw64();
-		evolve_seed();
-		return rv;
-	}
-	std::string get_name() const {
-		std::ostringstream tmp;
-		tmp << "SeedingTester(" << base_rng->get_name() << ")";
-		return tmp.str();
-	}
-	void walk_state(StateWalkingObject *) {}
-};
-class EntropyPool_MetaRNG : public PractRand::RNGs::vRNG64 {
-public:
-	typedef Uint64 Transform;
-	PractRand::RNGs::vRNG *base_entropy_pool;
-	int min_length, max_length;
-	int history_length;
-	std::vector<Uint8> current_seed;
-	Transform last_transform;
-	std::multiset<Uint64> unordered_history;//hashes only
-	std::deque<std::pair<std::multiset<Uint64>::iterator,Transform> > history;//hashes first, then transform applied - newest at front
-
-	//what it should be: (but the current version is good enough)
-	//std::map<Uint64,Uint64> unordered_history;// hashes -> positions;
-	//std::deque<std::pair<std::map<Uint64,Uint64>::iterator,Transform> > history;//hashes first, then transform applied - newest at front
-	//Uint64 position;//starts at 0, incremented after every entropy string
-
-	EntropyPool_MetaRNG(PractRand::RNGs::vRNG *base_entropy_pool_, int min_length_, int max_length_, int history_length_ = 1024) : base_entropy_pool(base_entropy_pool_), min_length(min_length_), max_length(max_length_), history_length(history_length_) {
-		int len = (min_length + max_length) / 2;
-		current_seed.reserve(max_length);
-		current_seed.resize(len);
-		for (int i = 0; i < len; i++) current_seed[i] = known_good.raw8();
-		//last_transform = ???;
-	}
-	~EntropyPool_MetaRNG() {delete base_entropy_pool;}
-	Transform pick_random_transform(const std::vector<Uint8> &message) {
-		while (true) {
-			if (known_good.randf() < 0.96) {//toggle bit
-				return known_good.randi(message.size() * 8) + (Uint64(0) << 56);
-			}
-			if (known_good.randf() < 0.50) {//insertion
-				if (message.size() >= max_length) continue;
-				//low 8 bits = value to insert ; next 28 bits = position to insert at ; top 8 bits = action type
-				Uint64 position = known_good.randi(message.size()+1);
-				return known_good.raw8() + (position << 8) + (Uint64(1) << 56);
-			}
-			else {//deletion
-				if (message.size() <= min_length) continue;
-				Uint64 position = known_good.randi(message.size());
-				return message[position] + (position << 8) + (Uint64(2) << 56);
-			}
-		}
-	}
-	void apply_transform(std::vector<Uint8> &message, Transform transform) {
-		//toggle bit, add byte at end, add byte at begining, remove byte at end, remove byte at begining
-		//adds or removals must include the data added or removed in addition to the action
-		switch (transform >> 56) {
-		case 0://toggle bit
-			message[transform >> 3] ^= 1 << (transform & 7);
-			break;
-		case 1://insert byte
-			{
-			int position = (transform >> 8) & ((1ull << 28) - 1);
-			int value = transform & 255;
-			int old_size = message.size();
-			if (position > old_size) {std::printf("internal error - invalid EntropyPool_MetaRNG transform (insert)\n");std::exit(1);}
-			message.resize(old_size + 1);
-			if (position < old_size) std::memmove(&message[position+1], &message[position], old_size-position);
-			message[position] = value;
-			}
-			break;
-		case 2://delete byte
-			{
-			int position = (transform >> 8) & ((1ull << 28) - 1);
-			int value = transform & 255;
-			int old_size = message.size();
-			if (message[position] != value || position >= old_size) {std::printf("internal error - invalid EntropyPool_MetaRNG transform (deletion)\n");std::exit(1);}
-			if (position != old_size-1) std::memmove(&message[position], &message[position+1], old_size-1-position);
-			message.resize(old_size - 1);
-			}
-			break;
-		default:
-			std::printf("internal error - unrecognized EntropyPool_MetaRNG transform\n");
-			std::exit(1);
-		}
-	}
-	void apply_inverse_transform(std::vector<Uint8> &message, Transform transform) {
-		switch (transform >> 56) {
-		case 0://reverse a toggle bit by doing the same thign
-			apply_transform(message, transform);
-			break;
-		case 1://reverse an insertion with a deletion
-			apply_transform(message, transform + (Uint64(1)<<56));
-			break;
-		case 2://reverse a deletion with an insertion
-			apply_transform(message, transform - (Uint64(1)<<56));
-			break;
-		}
-	}
-	Uint64 hash_message(const std::vector<Uint8> &message) {
-		base_entropy_pool->reset_entropy();
-		base_entropy_pool->add_entropy_N(&message[0], current_seed.size());
-		//base_entropy_pool->add_entropy64(0);
-		base_entropy_pool->flush_buffers();
-		return base_entropy_pool->raw64();
-	}
-	void check_history_length() {
-		while (history.size() > history_length) {
-			unordered_history.erase(history.back().first);
-			history.pop_back();
-		}
-	}
-	int hamming_distance(const Uint8 *message1, const Uint8 *message2, int n) {
-		Uint32 sum = 0;
-		for (int i = 0; i < n; i++) sum += PractRand::Tests::count_bits8(message1[i] ^ message2[i]);
-		return sum;
-	}
-	bool check_conflict(const std::vector<Uint8> &message) {
-		std::vector<Uint8> rewound = current_seed;
-		for (std::deque<std::pair<std::multiset<Uint64>::iterator,Transform> >::iterator it = history.begin(); it != history.end(); it++) {
-			//if (message.size() == rewound.size() && !std::memcmp(&message[0], &rewound[0], message.size())) {
-			if (message.size() == rewound.size() && !hamming_distance(&message[0], &rewound[0], message.size())) {
-				return true;
-			}
-			apply_inverse_transform(rewound, it->second);
-		}
-		return false;
-	}
-	void evolve_seed() {
-		while (true) {
-			Transform t = pick_random_transform(current_seed);
-			std::vector<Uint8> new_seed = current_seed;
-			apply_transform(new_seed, t);
-			Uint64 hash = hash_message(new_seed);
-			std::pair<std::multiset<Uint64>::iterator, std::multiset<Uint64>::iterator> sitr = unordered_history.equal_range(hash);
-			if (sitr.first == sitr.second || !check_conflict(new_seed)) {//no conflicts
-				current_seed.swap(new_seed);
-				std::multiset<Uint64>::iterator it;
-				if (sitr.first == unordered_history.end()) it = unordered_history.insert(hash);
-				else it = unordered_history.insert(--sitr.first, hash);
-				history.push_front(std::pair<std::multiset<Uint64>::iterator,Transform>(it, t));
-				check_history_length();
-				return;
-			}
-		}
-	}
-	Uint64 raw64() {
-		Uint64 rv = hash_message(current_seed);
-		evolve_seed();
-		return rv;
-	}
-	std::string get_name() const {
-		std::ostringstream tmp;
-		tmp << "EntropyPoolingTester(" << base_entropy_pool->get_name() << "," << min_length << "to" << max_length << ")";
-		return tmp.str();
-	}
-	void walk_state(StateWalkingObject *) {}
-};
-
+const char *seed_str = NULL;
 
 double show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bool smart_thresholds, double threshold, bool end_on_failure) {
 	std::printf("rng=%s", tman->get_rng()->get_name().c_str());
 
 	std::printf(", seed=");
-	if (seed >> 32) std::printf("0x%lx%08lx", long(seed >> 32), long(seed & 0xFFffFFff));
-	else std::printf("0x%lx", long(seed));
+	if (tman->get_rng()->get_flags() & PractRand::RNGs::FLAG::SEEDING_UNSUPPORTED) {
+		if (seed_str) std::printf("%s", seed_str);
+		else std::printf("unknown");
+	}
+	else {
+		if (seed >> 32) std::printf("0x%lx%08lx", long(seed >> 32), long(seed & 0xFFffFFff));
+		else std::printf("0x%lx", long(seed));
+	}
 	std::printf("\n");
 
 	std::printf("length= ");
@@ -461,8 +325,16 @@ double show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bo
 
 	std::vector<PractRand::TestResult> results;
 	tman->get_results(results);
-	double total_weight = 0;
-	for (int i = 0; i < results.size(); i++) total_weight += results[i].get_weight();
+	double total_weight = 0, min_weight = 9999999;
+	for (int i = 0; i < results.size(); i++) {
+		double weight = results[i].get_weight();
+		total_weight += weight;
+		if (weight < min_weight) min_weight = weight;
+	}
+	if (min_weight <= 0) {
+		std::printf("error: result weight too small\n");
+		std::exit(1);
+	}
 	std::vector<int> marked;
 	for (int i = 0; i < results.size(); i++) {
 		results[i].set_weight(results[i].get_weight() / total_weight);
@@ -470,8 +342,8 @@ double show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bo
 			if (std::fabs(0.5 - results[i].get_pvalue()) < 0.5 - threshold) continue;
 		}
 		else {
-			double T = threshold * results[i].get_weight();
-			if (std::fabs(0.5 - results[i].get_pvalue()) < 0.5 * (1 - T)) continue;
+			double T = threshold * results[i].get_weight() * 0.5;
+			if (std::fabs(0.5 - results[i].get_pvalue()) < (0.5 - T)) continue;
 		}
 		marked.push_back(i);
 	}
@@ -487,6 +359,7 @@ double show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bo
 	else
 		std::printf("  ...and %d test result(s) without anomalies\n", int(results.size() - marked.size()));
 	std::printf("\n");
+	std::fflush(stdout);
 	if (end_on_failure && biggest_decimal_suspicion > 8.5) std::exit(0);
 }
 double interpret_length(const std::string &lengthstr, bool normal_mode) {
@@ -533,19 +406,19 @@ double interpret_length(const std::string &lengthstr, bool normal_mode) {
 		scale = 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0;
 		break;
 	case 's':
-		scale = -1;
+		scale = -1;//one second
 		expect_B = false;
 		break;
 	case 'm':
-		scale = -60;
+		scale = -60;//one minute
 		expect_B = false;
 		break;
 	case 'h':
-		scale = -3600;
+		scale = -3600;//one hour
 		expect_B = false;
 		break;
 	case 'd':
-		scale = -86400;
+		scale = -86400;//one day
 		expect_B = false;
 		break;
 	}
@@ -580,8 +453,41 @@ bool interpret_seed(const std::string &seedstr, Uint64 &seed) {
 	return true;
 }
 
+#include "PractRand/tests/Birthday.h"
+#include "PractRand/tests/FPMulti.h"
+#include "PractRand/tests/DistFreq4.h"
+#include "PractRand/tests/Gap16.h"
+PractRand::Tests::ListOfTests testset_BirthdaySystematic() {
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::FPMulti(3,0));
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::BirthdayAlt(10), new PractRand::Tests::Birthday32());
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::BirthdayAlt(22));
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::BirthdaySystematic(25));
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::Birthday32());
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::Birthday64());
+	//return PractRand::Tests::ListOfTests(new PractRand::Tests::BirthdayLamda1(20));
+	return PractRand::Tests::ListOfTests(new PractRand::Tests::Rep16());
+}
+struct UnfoldedTestSet {
+	int number;
+	PractRand::Tests::ListOfTests(*callback)();
+	const char *name;
+};
+UnfoldedTestSet test_sets[] = {
+	{ 0, PractRand::Tests::Batteries::get_core_tests, "core" },//default value must come first
+	{ 1, PractRand::Tests::Batteries::get_expanded_core_tests, "expanded" },
+	{ 10, testset_BirthdaySystematic, "special (Birthday)" },
+	{ -1, NULL, NULL }
+};
+int lookup_te_value(int te) {
+	for (int i = 0; true; i++) {
+		if (test_sets[i].number == te) return i;
+		if (test_sets[i].number == -1) return -1;
+	}
+}
+
 int main(int argc, char **argv) {
 	PractRand::initialize_PractRand();
+	std::printf("RNG_test using PractRand version %s\n", PractRand::version_str);
 #ifdef WIN32 // needed to allow binary stdin on windows
 	_setmode( _fileno(stdin), _O_BINARY);
 #endif
@@ -595,7 +501,7 @@ int main(int argc, char **argv) {
 		std::printf("Alternatively, use stdin as an RNG name to read raw binay data piped in from an\n");
 		std::printf("external RNG.\n");
 		std::printf("options available include -a, -e, -p, -tf, -te, -ttnormal, -ttseed64, -ttep,\n");
-		std::printf("-tlmin, -tlmax, -tlshow, -threads, -nothreads, and -seed.\n");
+		std::printf("-tlmin, -tlmax, -tlshow, -multithreaded, -singlethreaded, and -seed.\n");
 		std::printf("For more information run: %s -help\n\n", argv[0]);
 		std::exit(0);
 	}
@@ -643,6 +549,11 @@ int main(int argc, char **argv) {
 		std::printf("                 the normal ones for PractRand, optimized for sensitivity per \n");
 		std::printf("                 time.  1 means that the expanded test set is used, optimized \n");
 		std::printf("                 for sensitivity per bit.\n");
+		std::printf("                 ... and now additional value(s) are supported.  Setting this \n");
+		std::printf("                 to 10 will use an systematically expanding Birthday Spacings \n");
+		std::printf("                 Test in place of a normal test set.  This test is separate \n");
+		std::printf("                 because it uses too much memory to run concurrently with other\n");
+		std::printf("                 tests\n");
 		std::printf("test target options:\n");
 		std::printf(" At most one test target option should be specified.\n");
 		std::printf(" The default test target option is '-ttnormal'\n");
@@ -653,17 +564,30 @@ int main(int argc, char **argv) {
 		std::printf("                 another seed is chosen at a low hamming distance from the\n");
 		std::printf("                 prior seed and another 8 bytes of RNG output are given to the\n");
 		std::printf("                 tests.\n");
-		std::printf("                 This is repeated indefinitely, with care taken to avoid\n");
-		std::printf("                 duplicate seeds.  Eventually (after about a quarter billion\n");
-		std::printf("                 seeds are used) issues start to crop up due to the limited\n");
-		std::printf("                 size of the seedspace and the inability to keep a complete\n");
-		std::printf("                 record of previously chosen seeds.\n");
+		std::printf("                 This is repeated indefinitely, with care taken to minimize\n");
+		std::printf("                 the amount of duplicate seeds used.  \n");
 		//           12345678901234567890123456789012345678901234567890123456789012345678901234567890
 		std::printf("  -ttep          Test target: Entropy pooling.  This should only be done on\n");
 		std::printf("                 RNGs that support entropy pooling.  It is similar to \n");
 		std::printf("                 -ttseed64, but the entropy accumulation methods are used\n");
 		std::printf("                 instead of simple seeding, and the amount of entropy used is\n");
 		std::printf("                 much larger.\n");
+		std::printf("  -walk_sequence  Some test-target modes will search seeds sequentially, \n");
+		std::printf("                  each subsequent seed 1 higher than the previous.\n");
+		std::printf("  -walk_greycode  Some test-target modes will search seeds in a simple \n");
+		std::printf("                  greycoded sequence, each subsequent seed at Hamming \n");
+		std::printf("                  distance 1 from the prior in a strict order.\n");
+		std::printf("  -walk_random    Some test-target modes will search seeds in a random walk,\n");
+		std::printf("                  each subsequent seed chosen at random from unused values \n");
+		std::printf("                  at Hamming distance 1 from the prior value.\n");
+		std::printf("  -walk_random_l  Some test-target modes will search seeds in a random walk,\n");
+		std::printf("                  each subsequent seed chosen at random from unused values \n");
+		std::printf("                  at Hamming distance 1 from the prior value, but lower bits\n");
+		std::printf("                  will be changed much more often than higher bits.\n");
+		std::printf("  -walk_random_h  Some test-target modes will search seeds in a random walk,\n");
+		std::printf("                  each subsequent seed chosen at random from unused values \n");
+		std::printf("                  at Hamming distance 1 from the prior value, but higher bits\n");
+		std::printf("                  will be changed much more often than lower bits.\n");
 		std::printf("test length options:\n");
 		std::printf("  -tlmin LENGTH  sets the minimum test length to LENGTH.  The tests will run on\n");
 		std::printf("                 that much data before it starts printing regular results.  A\n");
@@ -693,7 +617,8 @@ int main(int argc, char **argv) {
 		std::printf("  -singlethreaded disables multithreaded testing.  (default)\n");
 		std::printf("  -seed SEED      specifies a 64 bit integer to seed the tested RNG with.  If\n");
 		std::printf("                  no seed is specified then a seed will be chosen randomly.  \n");
-		std::printf("                  The value should be expressed in hexadecimal.\n");
+		std::printf("                  The value should be expressed in hexadecimal.  An '0x' prefix\n");
+		std::printf("                  on the seed is acceptable but not necessary.\n");
 		std::printf("notes on lengths:\n");
 		//           12345678901234567890123456789012345678901234567890123456789012345678901234567890
 		std::printf("  Each of the test length options requires a field named LENGTH.  These fields\n");
@@ -715,11 +640,12 @@ int main(int argc, char **argv) {
 		std::printf("  prefixes as refering to numbers of bytes in normal test target mode, or\n");
 		std::printf("  numbers of seeds in seeding test target mode, or numbers of strings in \n");
 		std::printf("  entropy pooling test target mode.\n");
-		std::printf("  example: -tlmin 40M (sets the minimum test length to 40 million bytes or 40\n");
+		std::printf("  example: -tlmin 40M (sets the minimum test length to ~40 million bytes or ~40\n");
 		std::printf("    million seeds, depending upon test target mode)\n");
 		std::printf("  A minor detail: I use the de facto standard (in which K means 1024 when\n");
-		std::printf("  dealing with quantities of information) not the official standard (in which K\n");
-		std::printf("  means 1000 no matter what is being dealt with unless an 'i' follows the 'K').\n");
+		std::printf("  dealing with quantities of binary information) not the official standard (in\n");
+		std::printf("  which K means 1000 no matter what is being dealt with unless an 'i' follows\n");
+		std::printf("  the 'K').\n");
 		//           12345678901234567890123456789012345678901234567890123456789012345678901234567890
 		std::exit(0);
 	}
@@ -729,20 +655,23 @@ int main(int argc, char **argv) {
 	RNG_Factories::register_input_RNGs();
 	RNG_Factories::register_candidate_RNGs();
 	RNG_Factories::RNG_factory_index["dummy"] = RNG_Factories::_generic_notrecommended_RNG_factory<DummyRNG>;
-	PractRand::RNGs::vRNG *rng = RNG_Factories::create_rng(argv[1]);
+	Seeder_MetaRNG::register_name();
+	EntropyPool_MetaRNG::register_name();
+	std::string errmsg;
+	RNGs::vRNG *rng = RNG_Factories::create_rng(argv[1], &errmsg);
 	if (!rng) {
-		std::printf("unrecognized RNG name.  aborting.\n");
-		std::exit(0);
+		if (errmsg.empty()) std::fprintf(stderr, "unrecognized RNG name.  aborting.\n");
+		else std::fprintf(stderr, "%s\n", errmsg.c_str());
+		std::exit(1);
 	}
 
 	bool do_self_test = true;
 	bool use_multithreading = false;
 	bool end_on_failure = true;
-	Uint64 seed = known_good.raw32();//64 bit space, as that's what the interface accepts, but 32 bit random value so that by default it's not too onerous to record/compare/whatever the value by hand
 	bool smart_thresholds = true;
-	double threshold = 0.2;
+	double threshold = 0.1;
 	int folding = 1;//0 = no folding, 1 = standard folding, 2 = extra folding
-	int expanded = 0;//0 = core test set, 1 = expanded test set
+	int test_set_index = lookup_te_value(0);
 	int mode = 0;//0 = normal, 1 = test seeding, 2 = test entropy pooling
 	for (int i = 2; i < argc; i++) {
 		int params_left = argc - i - 1;
@@ -784,8 +713,9 @@ int main(int argc, char **argv) {
 		}
 		else if (!std::strcmp(argv[i], "-te")) {
 			if (params_left < 1) {std::printf("command line option %s must be followed by a value\n", argv[i]); std::exit(0);}
-			expanded = std::atoi(argv[++i]);
-			if (expanded < 0 || expanded > 1) {
+			int expanded = std::atoi(argv[++i]);
+			test_set_index = lookup_te_value(expanded);//0 maps to 0, but other values may not map to themselves
+			if (test_set_index == -1) {
 				std::printf("invalid expanded test set value: -te %s\n", argv[i]);
 				std::exit(0);
 			}
@@ -815,9 +745,7 @@ int main(int argc, char **argv) {
 		else if (!std::strcmp(argv[i], "-skip_selftest")) do_self_test = false;
 		else if (!std::strcmp(argv[i], "-seed")) {
 			if (params_left < 1) {std::printf("command line option %s must be followed by a value\n", argv[i]); std::exit(0);}
-			if (!interpret_seed(argv[++i],seed)) {
-				std::printf("\"%s\" is not a valid 64 bit hexadecimal seed\n", argv[i]); std::exit(0);
-			}
+			seed_str = argv[++i];
 		}
 		else {
 			std::printf("unrecognized parameter: %s\naborting\n", argv[i]);
@@ -870,7 +798,14 @@ int main(int argc, char **argv) {
 	std::time_t start_time = std::time(NULL);
 	TimeUnit start_clock = get_time();
 
-	known_good.seed(seed+1);//the +1 is there just in case the RNG uses the same algorithm as the known good RNG
+	Uint64 seed = known_good.raw32();//64 bit space, as that's what the interface accepts, but 32 bit random value so that by default it's not too onerous to record/compare/whatever the value by hand
+	if (seed_str && !(rng->get_flags() & PractRand::RNGs::FLAG::SEEDING_UNSUPPORTED)) {
+		if (!interpret_seed(seed_str, seed)) {
+			std::printf("\"%s\" is not a valid 64 bit hexadecimal seed\n", seed_str);
+			std::exit(0);
+		}
+	}
+	known_good.seed(seed + 1);//the +1 is there just in case the RNG uses the same algorithm as the known good RNG
 
 	PractRand::RNGs::vRNG *testing_rng;
 	if (mode == 0) {
@@ -880,7 +815,8 @@ int main(int argc, char **argv) {
 	else if (mode == 1) {
 		//it would be nice to print a warning here for RNGs that use generic integer seeding
 		//but that's a little difficult atm as there's no way to query whether an RNG does so
-		testing_rng = new Seeder_MetaRNG(rng,1<<10);
+		testing_rng = new Seeder_MetaRNG(rng);
+		testing_rng->seed(seed);
 	}
 	else if (mode == 2) {
 		if (!(rng->get_flags() & PractRand::RNGs::FLAG::SUPPORTS_ENTROPY_ACCUMULATION)) {
@@ -918,15 +854,21 @@ int main(int argc, char **argv) {
 		}
 		rng->seed(seed);
 		//I'd like to test varying length entropy strings, but known good EPs are failing eventually when varying length is allowed for some reason
-		testing_rng = new EntropyPool_MetaRNG(rng,35,35,1<<10);
+		testing_rng = new EntropyPool_MetaRNG(rng,48,64);
+		testing_rng->seed(seed);
 	}
 
-	std::printf("RNG = %s, PractRand version %s, seed = 0x", testing_rng->get_name().c_str(), PractRand::version_str);
-	if (seed >> 32) std::printf("%lx%08lx", long(seed>>32), long((seed<<32)>>32));
-	else std::printf("%lx", long(seed));
-	const char *test_set_names[2] = {"normal", "expanded"};
+	std::printf("RNG = %s, seed = ", testing_rng->get_name().c_str());
+	if (testing_rng->get_flags() & PractRand::RNGs::FLAG::SEEDING_UNSUPPORTED) {
+		if (seed_str) std::printf("%s", seed_str);
+		else std::printf("unknown");
+	}
+	else {
+		if (seed >> 32) std::printf("0x%lx%08lx", long(seed >> 32), long((seed << 32) >> 32));
+		else std::printf("0x%lx", long(seed));
+	}
 	const char *folding_names[3] = {"none", "standard", "extra"};
-	std::printf("\ntest set = %s, folding = %s", test_set_names[expanded], folding_names[folding]);
+	std::printf("\ntest set = %s, folding = %s", test_sets[test_set_index].name, folding_names[folding]);
 	if (folding == 1) {
 		int native_bits = testing_rng->get_native_output_size();
 		if (native_bits > 0) std::printf(" (%d bit)", native_bits);
@@ -936,35 +878,22 @@ int main(int argc, char **argv) {
 	std::printf("\n\n");
 
 	Tests::ListOfTests tests( (Tests::TestBaseclass*)NULL);
+	if (test_set_index == -1) { std::printf("internal error\n"); std::exit(1); }
 	if (false) ;
-		// speed in testing on 3.3 GHrz Core i5, tested on a very fast RNG -- name = description
-		// 5.6 GB / minute -- core = basic tests only, no folding
-	else if (folding == 0 && expanded == 0) tests = Tests::Batteries::get_core_tests();
-
-		// 4.4 GB / minute -- standard = basic tests, smart folding
-	else if (folding == 1 && expanded == 0) tests = Tests::Batteries::get_standard_tests(testing_rng);
-
-		// 2.5 GB / minute -- extended folding = basic tests, extra folding -- 
-	else if (folding == 2 && expanded == 0) tests = Tests::Batteries::get_folded_tests();
-
-		// 1.47 GB / minute -- expanded core = extra tests, no folding
-	else if (folding == 0 && expanded == 1) tests = Tests::Batteries::get_expanded_core_tests();
-
-		// 1.03 GB / minute -- expanded standard = extra tests, smart folding
-	else if (folding == 1 && expanded == 1) tests = Tests::Batteries::get_expanded_standard_tests(testing_rng);
-
-		// 0.50 GB / minute -- maximum = extra tests, extra folding
-	else if (folding == 2 && expanded == 1) tests = Tests::Batteries::get_expanded_folded_tests();
-	else {std::printf("internal error\n"); std::exit(1);}
+	else if (folding == 0) tests = test_sets[test_set_index].callback();
+	else if (folding == 1) tests = Tests::Batteries::apply_standard_foldings(testing_rng, test_sets[test_set_index].callback);
+	else if (folding == 2) tests = Tests::Batteries::apply_extended_foldings(test_sets[test_set_index].callback);
+	else { std::printf("internal error\n"); std::exit(1); }
 
 //	Tests::ListOfTests tests = Tests::Batteries::get_expanded_standard_tests(rng);
 #if defined MULTITHREADING_SUPPORTED
 	TestManager *tman;
-	if (use_multithreading) tman = new MultithreadedTestManager(testing_rng, &tests, &known_good);
-	else tman = new TestManager(testing_rng, &tests, &known_good);
+	if (use_multithreading) tman = new MultithreadedTestManager(&tests, &known_good);
+	else tman = new TestManager(&tests, &known_good);
 #else
-	TestManager *tman = new TestManager(testing_rng, &tests, &known_good);
+	TestManager *tman = new TestManager(&tests, &known_good);
 #endif
+	tman->reset(testing_rng);
 
 	Uint64 blocks_tested = 0;
 	bool already_shown = false;

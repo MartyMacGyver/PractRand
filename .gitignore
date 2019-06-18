@@ -21,9 +21,13 @@
 *.lai
 *.la
 *.a
-*.lib
+#*.lib
 
 # Executables
-*.exe
+#*.exe
 *.out
 *.app
+
+x64/
+Win32/
+/VisualC_net/.vs

@@ -130,6 +130,81 @@ namespace PractRand {
 				}
 				std::string ReinterpretAs64::get_name() const {return std::string("As64(") + base_rng->get_name() + ")";}
 
+				Discard16to8::Discard16to8(vRNG *base_rng_) : Transform8(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as16[0];
+					index = 8192 / INPUT_BITS;
+				}
+				void Discard16to8::refill() { PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0; }
+				std::string Discard16to8::get_name() const { return std::string("Discard16to8(") + base_rng->get_name() + ")"; }
+				Uint8 Discard16to8::raw8() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+				Discard32to8::Discard32to8(vRNG *base_rng_) : Transform8(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as32[0];
+					index = 8192 / 32;
+				}
+				std::string Discard32to8::get_name() const { return std::string("Discard32to8(") + base_rng->get_name() + ")"; }
+				void Discard32to8::refill() { PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0; }
+				Uint8 Discard32to8::raw8() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+				Discard64to8::Discard64to8(vRNG *base_rng_) : Transform8(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as64[0];
+					index = 8192 / INPUT_BITS;
+				}
+				std::string Discard64to8::get_name() const { return std::string("Discard64to8(") + base_rng->get_name() + ")"; }
+				void Discard64to8::refill() {
+					PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0;
+				}
+				Uint8 Discard64to8::raw8() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+				Discard32to16::Discard32to16(vRNG *base_rng_) : Transform16(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as32[0];
+					index = 8192 / INPUT_BITS;
+				}
+				std::string Discard32to16::get_name() const { return std::string("Discard32to16(") + base_rng->get_name() + ")"; }
+				void Discard32to16::refill() { PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0; }
+				Uint16 Discard32to16::raw16() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+				Discard64to16::Discard64to16(vRNG *base_rng_) : Transform16(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as64[0];
+					index = 8192 / INPUT_BITS;
+				}
+				std::string Discard64to16::get_name() const { return std::string("Discard64to16(") + base_rng->get_name() + ")"; }
+				void Discard64to16::refill() { PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0; }
+				Uint16 Discard64to16::raw16() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+				Discard64to32::Discard64to32(vRNG *base_rng_) : Transform32(base_rng_) {
+					//if (base_rng_->get_native_output_size() != INPUT_BITS) std::cerr << "* warning: Discard16to8 using incorrect input size?\n";
+					PractRand::Tests::TestBlock *block = new PractRand::Tests::TestBlock;
+					buffer = &block->as64[0];
+					index = 8192 / INPUT_BITS;
+				}
+				std::string Discard64to32::get_name() const { return std::string("Discard64to32(") + base_rng->get_name() + ")"; }
+				void Discard64to32::refill() { PractRand::Tests::TestBlock *block = (PractRand::Tests::TestBlock*) buffer; block->fill(base_rng); index = 0; }
+				Uint32 Discard64to32::raw32() {
+					if (index >= 8192 / INPUT_BITS) refill();
+					return OutWord(buffer[index++]);
+				}
+
 				void GeneralizedTableTransform::seed(Uint64 s) {base_rng->seed(s);}
 				Uint64 GeneralizedTableTransform::get_flags() const {
 					return base_rng->get_flags() | FLAG::USES_FLOW_CONTROL | FLAG::STATE_UNAVAILABLE;//not exactly, but close enough

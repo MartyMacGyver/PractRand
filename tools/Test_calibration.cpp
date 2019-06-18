@@ -29,6 +29,7 @@
 #include "PractRand/Tests/FPMulti.h"
 #include "PractRand/Tests/BRank.h"
 #include "PractRand/Tests/CoupGap.h"
+#include "PractRand/Tests/mod3.h"
 
 //specific RNG algorithms, to produce (pseudo-)random numbers
 #include "PractRand/RNGs/all.h"
@@ -51,27 +52,70 @@ using namespace PractRand::Tests;
 
 
 
-double ref_p[117] = { 
-	0.00001, 0.00002, 0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 
-	0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 
-	0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 
-	0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 
-	0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40, 
-	0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50, 
-	0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59, 0.60, 
-	0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.70, 
-	0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80, 
-	0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, 
-	0.91, 0.92, 0.93, 0.94, 0.95, 0.96,	0.97, 0.98, 0.99, 
+double ref_p117[117] = {
+	0.00001, 0.00002, 0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005,
+	0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10,
+	0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
+	0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30,
+	0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40,
+	0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50,
+	0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59, 0.60,
+	0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.70,
+	0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80,
+	0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90,
+	0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99,
 	0.995, 0.998, 0.999, 0.9995, 0.9998, 0.9999, 0.99995, 0.99998, 0.99999
+};
+double ref_p129[129] = {
+	0.0000001, 0.0000002, 0.0000005,
+	0.000001, 0.000002, 0.000005, 0.00001, 0.00002, 0.00005,
+	0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005,
+	0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10,
+	0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
+	0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30,
+	0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40,
+	0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50,
+	0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59, 0.60,
+	0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.70,
+	0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80,
+	0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90,
+	0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99,
+	0.995, 0.998, 0.999, 0.9995, 0.9998, 0.9999,
+	0.99995, 0.99998, 0.99999, 0.999995, 0.999998, 0.999999,
+	0.9999995, 0.9999998, 0.9999999
+};
+double ref_p129_with_formatting[] = {
+	0.0000001, 0.0000002, 0.0000005, -1,
+	0.000001, 0.000002, 0.000005, -1,
+	0.00001, 0.00002, 0.00005, -1,
+	0.0001, 0.0002, 0.0005, -1,
+	0.001, 0.002, 0.005, -1,
+	0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, -1,
+	0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, -1,
+	0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, -1,
+	0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40, -1,
+	0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50, -1,
+	0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59, 0.60, -1,
+	0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.70, -1,
+	0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80, -1,
+	0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, -1,
+	0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, -1,
+	0.995, 0.998, 0.999, -1,
+	0.9995, 0.9998, 0.9999, -1,
+	0.99995, 0.99998, 0.99999, -1,
+	0.999995, 0.999998, 0.999999, -1,
+	0.9999995, 0.9999998, 0.9999999, -2
 };
 void print_ss(const SampleSet &ss, const std::string &name, Uint64 blocks) {
 //	std::printf("{\"BCFN-%d/%d\",%7.0f,%5d, %d, {", tbits, 1<<stride_L2, double(Uint64(std::pow(2,length_L2) / 1024)), (int)ss.size(), (int)ss.num_duplicates());
 //	for (int i = 0; i < 117; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p[i]));
 //	std::printf("}, %+.4f, %+.4f, %.4f},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev());
-	std::printf("{\"%s\",%9.0f,%5d, %d, {", name.c_str(), (double)blocks, (long)ss.size(), (long)ss.num_duplicates());
-	for (int i = 0; i < 117; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p[i]));
-	std::printf("}, %+.4f, %+.4f, %.4f},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev());
+	std::printf("{\"%s\",%9.0f,%5d,%4d, {", name.c_str(), (double)blocks, (long)ss.size(), (long)ss.num_duplicates());
+	for (int i = 0; i < 129; i++) {
+		if (ref_p129[i] >= 0.01 && ref_p129[i] <= 0.99) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+		else std::printf("%s%+10.5f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+	}
+	std::printf("}, %+.4f, %+.4f, %.4f, %d},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev(), 0);
 }
 
 
@@ -194,9 +238,9 @@ void print_fake_bcfn_dist(int tbits, int stride_L2, double length_L2, int sample
 	double p = unbalanced ? (even_chance + 1)*0.5 : 0.5;
 	double unskipped_chance = unbalanced ? 1 : 1 - even_chance;
 	ss = fake_bcfn_dist(&known_good, tbits, std::pow(2, length_L2 + 3 - level) * unskipped_chance - tbits + 1, samples, p);
-	std::printf("{\"%s-%d/%d\",%9.0f,%5d, %d, {", unbalanced?"BCFNU":"BCFN", tbits, 1<<stride_L2, double(Uint64(std::pow(2,length_L2) / 1024)), (int)ss.size(), (int)ss.num_duplicates());
-	for (int i = 0; i < 117; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p[i]));
-	std::printf("}, %+.4f, %+.4f, %.4f},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev());
+	std::printf("{\"%s-%d/%d\",%9.0f,%5d,%4d, {", unbalanced?"BCFNU":"BCFN", tbits, 1<<stride_L2, double(Uint64(std::pow(2,length_L2) / 1024)), (int)ss.size(), (int)ss.num_duplicates());
+	for (int i = 0; i < 129; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+	std::printf("}, %+.4f, %+.4f, %.4f, %d},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev(), 0);
 }
 void blah_bcfn() {
 	for (int n = 1<<10; n <= 1<<24; n<<=2) {
@@ -271,9 +315,12 @@ void print_fake_fpf_intra(int tbits, Uint64 sample_length, int trials) {
 	ss = ss_raw;
 
 
-	std::printf("{\"FPF-%d+6/8+\",%9.0f,%5d, %d, {", tbits, double(sample_length), (int)ss.size(), (int)ss.num_duplicates());
-	for (int i = 0; i < 117; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p[i]) );
-	std::printf("}, %+.4f, %+.4f, %.4f},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev());
+	std::printf("{\"FPF-%d+6/8+\",%9.0f,%5d,%4d, {", tbits, double(sample_length), (int)ss.size(), (int)ss.num_duplicates());
+	for (int i = 0; i < 129; i++) {
+		if (ref_p129[i] >= 0.01 && ref_p129[i] <= 0.99) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+		else std::printf("%s%+10.5f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+	}
+	std::printf("}, %+.4f, %+.4f, %.4f, %d},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev(), 0);
 }
 void print_fake_fpf_others(int tbits, Uint64 sample_length, int trials) {
 }
@@ -292,9 +339,12 @@ void blah_fpf_all2() {
 			ss._add(sum);
 		}
 		ss._normalize();
-		std::printf("{\"FPF:all2\",%d,%5d, %d, {", num_platters, (int)ss.size(), (int)ss.num_duplicates());
-		for (int i = 0; i < 117; i++) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p[i]));
-		std::printf("}, %+.4f, %+.4f, %.4f},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev());
+		std::printf("{\"FPF:all2\",%d,%5d,%4d, {", num_platters, (int)ss.size(), (int)ss.num_duplicates());
+		for (int i = 0; i < 129; i++) {
+			if (ref_p129[i] >= 0.01 && ref_p129[i] <= 0.99) std::printf("%s%+7.3f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+			else std::printf("%s%+10.5f", i ? "," : "", ss.get_result_by_percentile(ref_p129[i]));
+		}
+		std::printf("}, %+.4f, %+.4f, %.4f, %d},\n", ss.get_result_by_percentile(0.5), ss.get_mean(), ss.get_stddev(), 0);
 	}
 }
 void blah_fpf() {
@@ -316,11 +366,13 @@ void find_test_distributions() {
 
 	PractRand::RNGs::Polymorphic::hc256 known_good(PractRand::SEED_AUTO);
 
-	PractRand::RNGs::Polymorphic::efiix32x384 rng(&known_good);
+	PractRand::RNGs::Polymorphic::efiix32x48 rng(&known_good);
 
 	//Tests::ListOfTests tests(new Tests::BCFN2(2,13));
 	//Tests::ListOfTests tests(new Tests::Gap16());
-	Tests::ListOfTests tests(new Tests::BRank(40));
+	//Tests::ListOfTests tests(new Tests::BRank(40));
+	//Tests::ListOfTests tests(new Tests::BCFN_FF(2, 13));
+	Tests::ListOfTests tests(new Tests::mod3_simple());
 	//Tests::ListOfTests tests = Tests::Batteries::get_core_tests();
 	//Tests::ListOfTests tests = Tests::Batteries::get_expanded_core_tests();
 	//Tests::ListOfTests tests(new Tests::DistC6(9,0, 1,0,0));
@@ -335,20 +387,22 @@ void find_test_distributions() {
 	//Tests::ListOfTests tests(new Tests::FPF(5,14,6));
 	//Tests::ListOfTests tests(new Tests::FPF(6,14,6));
 	//Tests::ListOfTests tests(new Tests::FPMulti(4, 0));
-	TestManager tman(&rng, &tests, &known_good);
+	TestManager tman(&tests, &known_good);
+	tman.reset(&rng);
 
 	//Uint64 test_size = 1 << 16;
 	//test_size *= Tests::TestBlock::SIZE;
 
 	std::map<std::string,std::map<Uint64,SampleSet> > data;
 	Uint64 next_checkpoint = 1;
-	for (Uint64 n = 0; n <= 1<<30; n++) {
+	for (Uint64 n = 0; n <= 1ull<<30; n++) {
 		if (n == next_checkpoint) {
 			enum {CHUNKY = 1 << 12};
 			if (next_checkpoint < CHUNKY) next_checkpoint <<= 1; else next_checkpoint += CHUNKY;
 			std::printf("\n\n\n\n");
 			std::printf("==================================================\n");
-			std::printf("checkpoint @ %d\n", int(n) );
+			if (n & 1023) std::printf("checkpoint @ %d\n", int(n));
+			else std::printf("checkpoint @ %dK\n", int(n) >> 10);
 			/*if (test_size < 10ull << 20) std::printf("for length = %d KB\n", test_size >> 10);
 			else if (test_size < 10ull << 30) std::printf("for length = %d MB\n", test_size >> 20);
 			else if (test_size < 10ull << 40) std::printf("for length = %d GB\n", test_size >> 30);
@@ -363,8 +417,8 @@ void find_test_distributions() {
 					SampleSet &ss = it2->second;
 					ss._normalize();
 					//std::printf("//mean= %f; median= %f; stddev= %f;\n", ss.get_mean(), ss.get_result_by_percentile(0.50), ss.get_stddev());
-					std::printf("  {\"%s\",%9.0f, %d, %d, {", name.c_str(), double(length), (int)ss.rs.size(), (int)ss.num_duplicates());
-					double p[] = { 
+					std::printf("  {\"%s\",%9.0f, %d,%4d, {", name.c_str(), double(length), (int)ss.rs.size(), (int)ss.num_duplicates());
+					/*double p[] = { 
 						0.00001, 0.00002, 0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, -1, 
 						0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, -1, 
 						0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, -1, 
@@ -377,13 +431,15 @@ void find_test_distributions() {
 						0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, -1, 
 						0.91, 0.92, 0.93, 0.94, 0.95, 0.96,	0.97, 0.98, 0.99, -1, 
 						0.995, 0.998, 0.999, 0.9995, 0.9998, 0.9999, 0.99995, 0.99998, 0.99999, -2
-					};
+					};*/
+					double *p = ref_p129_with_formatting;
 					for (int i = 0; p[i] != -2; i++) {
 						if (p[i] == -1) continue;
 						if (i) std::printf(",");
-						std::printf("%+7.3f", ss.get_result_by_percentile(p[i]));
+						if (p[i] >= 0.01 && p[i] <= 0.99) std::printf("%+7.3f", ss.get_result_by_percentile(p[i]));
+						else std::printf("%+10.5f", ss.get_result_by_percentile(p[i]));
 					}
-					std::printf("}, %+7.3f, %+7.3f, %7.3f},\n", ss.get_result_by_percentile(0.50), ss.get_mean(), ss.get_stddev());
+					std::printf("}, %+7.3f, %+7.3f, %7.3f, %d},\n", ss.get_result_by_percentile(0.50), ss.get_mean(), ss.get_stddev(), 0);
 					//std::printf("}},\n");
 
 					/*for (int L2 = 0; (2ull << L2) <= ss.rs.size(); L2++) {
@@ -399,8 +455,8 @@ void find_test_distributions() {
 			}
 		}
 		Uint64 blocks_so_far = 0;
-		for (int length_L2 = 10; length_L2 <= 24; length_L2 += 1) {
-			if (length_L2 >= 13 && length_L2 < 25) {
+		for (int length_L2 = 25; length_L2 <= 32; length_L2 += 1) {
+			if (length_L2 >= 10+3 && length_L2 < 99) {
 				Uint64 new_blocks = (5ull << (length_L2-3)) / Tests::TestBlock::SIZE;
 				tman.test(new_blocks - blocks_so_far);
 				blocks_so_far = new_blocks;
@@ -410,7 +466,7 @@ void find_test_distributions() {
 					for (int j = 0; j < results.size(); j++) data[results[j].name][new_blocks]._add(results[j].get_raw());
 				}
 			}
-			if (length_L2 >= 12 && length_L2 <= 99) {
+			if (length_L2 >= 10+2 && length_L2 <= 99) {
 				Uint64 new_blocks = (3ull << (length_L2-2)) / Tests::TestBlock::SIZE;
 				tman.test(new_blocks - blocks_so_far);
 				blocks_so_far = new_blocks;
@@ -420,7 +476,7 @@ void find_test_distributions() {
 					for (int j = 0; j < results.size(); j++) data[results[j].name][new_blocks]._add(results[j].get_raw());
 				}
 			}
-			if (length_L2 >= 13 && length_L2 < 25) {
+			if (length_L2 >= 10+3 && length_L2 < 99) {
 				Uint64 new_blocks = (7ull << (length_L2-3)) / Tests::TestBlock::SIZE;
 				tman.test(new_blocks - blocks_so_far);
 				blocks_so_far = new_blocks;
@@ -487,7 +543,7 @@ void verify_test_distributions() {
 	std::clock_t start_clock = std::clock();
 
 	PractRand::RNGs::Polymorphic::hc256 known_good(PractRand::SEED_AUTO);
-	PractRand::RNGs::Polymorphic::efiix32x384 rng(PractRand::SEED_AUTO);
+	PractRand::RNGs::Polymorphic::efiix32x48 rng(PractRand::SEED_AUTO);
 
 	//simple_chisquare_test(&known_good);
 
@@ -501,7 +557,8 @@ void verify_test_distributions() {
 	//Tests::ListOfTests tests(new Tests::DistC6(4,3, 0,0,1));
 	//Tests::ListOfTests tests(new Tests::DistC6(5,3, 1,0,1));
 	//Tests::ListOfTests tests(new Tests::Gap16());
-	TestManager tman(&rng, &tests, &known_good);
+	TestManager tman(&tests, &known_good);
+	tman.reset(&rng);
 
 	std::map<std::string,std::map<int,SampleSet> > data;
 	Uint64 next_checkpoint = 1;
@@ -532,7 +589,7 @@ void verify_test_distributions() {
 					if (!ss.num_duplicates()) {
 						double sum = Tests::test_uniformity(ss);
 						double p = calib.get_percentile(sum);
-						std::printf("blah = %f of (%f:%f:%f)\n", sum, calib.get_result_by_percentile(.1), calib.get_result_by_percentile(.5), calib.get_result_by_percentile(.9));
+						std::printf("blah = %f of (%f:%f:%f)\n", sum, calib.get_result_by_percentile(.05), calib.get_result_by_percentile(.5), calib.get_result_by_percentile(.95));
 						std::printf("p = %f\n", p);
 						if (fabs(p-.5) > 0.499) std::printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 					}
@@ -558,9 +615,9 @@ void verify_test_distributions() {
 
 struct Data {
 	Uint64 count;
-	double vec[117];
+	double vec[129];
 	Data() : count(0) {
-		for (int i = 0; i < 117; i++) vec[i] = 0;
+		for (int i = 0; i < 129; i++) vec[i] = 0;
 	}
 };
 std::map<std::string,std::map<int, Data > > data;
@@ -572,9 +629,10 @@ void print_data() {
 			int length_L2 = it2->first;
 			const Data &d = it2->second;
 			std::printf("{ \"%s\", 1ull << (%d - 10), %.0f, {", name.c_str(), length_L2, (double)d.count );
-			for (int i = 0; i < 117; i++) {
-				std::printf("%+6.3f", d.vec[i]);
-				if (i != 116) std::printf(",");
+			for (int i = 0; i < 129; i++) {
+				if (ref_p129[i] >= 0.01 && ref_p129[i] <= 0.99) std::printf("%+7.3f", d.vec[i]);
+				else std::printf("%+10.5f", d.vec[i]);
+				if (i != 128) std::printf(",");
 			}
 			std::printf("}},\n");
 		}
@@ -935,15 +993,92 @@ void test_normal_distribution_a() {
 	}
 }
 
+Uint64 count_period(PractRand::RNGs::vRNG *rng) {
+	enum {BYTES = 32};//must be a power of 2 greater than or equal to 8
+	if (rng->get_native_output_size() == 8) {
+		typedef Uint8 Word;
+		enum { BUFSIZE = BYTES / sizeof(Word) };
+		Word buff1[BUFSIZE];
+		Word buff2[BUFSIZE];
+		rng->autoseed();
+		for (int i = 0; i < BUFSIZE; i++) buff1[i] = rng->raw8();
+		for (Uint64 p = 0; p < (1ull << 48); p++) {
+			if ((buff2[p & (BUFSIZE - 1)] = rng->raw8()) == buff1[BUFSIZE - 1]) {
+				bool match = true;
+				for (int i = 1; i < BUFSIZE; i++) if (buff2[(p - i) & (BUFSIZE - 1)] != buff1[BUFSIZE - 1 - i]) match = false;
+				if (match) {
+					Uint64 rv = p + 1;
+					std::printf("cycle found in [%s] of length %.0f\n", rng->get_name().c_str(), double(rv));
+					if (!(rv & ((1 << 20)-1))) std::printf("%.0fM exactly\n", double(rv >> 20));
+					else if (!(rv & 1023)) std::printf("%.0fK exactly\n", double(rv >> 10));
+					return rv;
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+void test_sfc16() {
+	if (1) {//search for short cycles
+		enum {
+			BUFFER_SIZE = 16,//plenty to tell if the state matched (6 would probably be enough, but more doesn't hurt)
+			SHORT_CYCLE_L2 = 40,//the log-based-2 of the cycle length we consider "too short"
+		};
+		Uint16 buffy[BUFFER_SIZE];
+		PractRand::RNGs::Raw::sfc16 rng;
+		for (Uint64 seed = 0; true; seed++) {
+			rng.seed(seed);
+			for (int i = 0; i < BUFFER_SIZE; i++) buffy[i] = rng.raw16();
+			for (Uint64 i = 0; i < ((1ull << SHORT_CYCLE_L2) - BUFFER_SIZE); i++) rng.raw16();
+			int match = true;
+			for (int i = 0; i < BUFFER_SIZE; i++) if (buffy[i] != rng.raw16()) match = false;
+			if (match || !(seed & 15)) {
+				std::printf("seed 0x");
+				if (seed >> 32) {
+					std::printf("%X", Uint32(seed >> 32));
+					std::printf("%08X", Uint32(seed >> 0));
+				}
+				else std::printf("%X", Uint32(seed));
+				if (match) std::printf(" had a short cycle\n\n  !!!!!!!!!!!!!!!!!!!\n\n  !!!!!!!!!!!!!!!!!!!\n\n  !!!!!!!!!!!!!!!!!!!\n");
+				else std::printf(" was good\n");
+			}
+		}
+
+	}
+	if (0) {
+		long double p248 = std::pow(2, 48);
+		long double base = std::pow(0.5, 48);
+		long double base_inv = 1 - base;
+		long double after2_16 = 1;
+		for (int i = 1; i < 65536; i++) {
+			after2_16 *= 1 - (1 / (p248 - i));
+		}
+		std::printf("chance of a seed leading to a cycle < 2**32: %g\n", 1 / (1 - after2_16));
+		long double after2_24 = 1;
+		for (int i = 1; i < 65536 * 256; i++) {
+			after2_24 *= 1 - (1 / (p248 - i));
+		}
+		std::printf("chance of a seed leading to a cycle < 2**40: %g\n", 1 / (1 - after2_24));
+		long double after2_32 = 1;
+		for (unsigned long i = 1; i < 65536 * 65536ul; i++) {
+			after2_32 *= 1 - (1 / (p248 - i));
+		}
+		std::printf("chance of a seed leading to a cycle < 2**48: %f\n", 1 / (1 - after2_32));
+	}
+}
+
 
 int main(int argc, char **argv) {
 	PractRand::initialize_PractRand();
 	PractRand::self_test_PractRand();
 
+	//test_sfc16();
 	//blah_bcfn();
 	//blah_fpf_all2();
 	//blah_fpf();
 	find_test_distributions();
+	//count_period(new PractRand::RNGs::Polymorphic::NotRecommended::xlcg8of64_varqual(28));
 	//verify_test_distributions();
 	//test_normal_distribution_a();
 	//print_data();

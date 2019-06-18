@@ -14,13 +14,17 @@ namespace PractRand {
 		double rarity_test(unsigned long categories, const double *prob_table, const Uint64 *counts);
 		double g_test(unsigned long categories, const double *prob_table, const Uint64 *counts);
 		double g_test_flat(unsigned long categories, const Uint64 *counts);
-		double g_test_flat_merge_normal ( unsigned long categories, const Uint64 *counts, Uint64 total=Uint64(-1) );
+		double g_test_flat_merge_normal(unsigned long categories, const Uint64 *counts, Uint64 total = Uint64(-1), double target_ratio = 32.0);//already converted to approximately normal distribution (mandatory since DoF is not returned)
+		double my_test(unsigned long categories, const double *prob_table, const Uint64 *counts);//if events are independent, this should converge to a normal distribution (mean 0 variance 1) ; intended for extremely unequal probability distributions like {0.5,0.25,0.125,0.0625,..}
 		double math_chisquared_to_pvalue ( double chisquared, double DoF );
 		double math_chisquared_to_normal ( double chisquared, double DoF );
 		double math_pvalue_to_chisquared ( double pvalue, double DoF );
-		double math_normaldist_to_pvalue ( double normal );
-		double math_pvalue_to_normaldist ( double pvalue );
+		double math_normaldist_to_pvalue(double normal);
+		double math_normaldist_to_suspicion(double normal);
+		double math_pvalue_to_normaldist(double pvalue);
 		double math_normaldist_pdf ( double normal );
+		double math_factorial(double a);
+		double math_factorial_log(Uint64 a);//log of a!
 		class SampleSet;
 		//long double gap_probs( int first, int last, long double baseprob = (255.0 / 256.0) );
 		//double raw_test_edge_distribution( unsigned long categories, const double *prob_table, const Uint64 *counts );
@@ -187,6 +191,35 @@ namespace PractRand {
 			static double index_to_pvalue(double index);
 			double pvalue_to_sample(double pvalue) const {return index_to_sample(pvalue_to_index(pvalue));}
 			double sample_to_pvalue(double sample) const {return index_to_pvalue(sample_to_index(sample));}
+		};
+		struct RawTestCalibrationData_129 {// 117 wasn't quite enough, or rather in a few rare cases we can do better with a little more
+			//for use on tests that produce (very) roughly a normal distribution (typically chi-squared tests on overlapping samples)
+			//should be based upon at least 512 test results on known good RNGs, preferably a lot more
+			const char *name;  //e.g. "Gap-16:A"
+			Uint64 blocks;     //e.g. 32 for 32 KB
+			Uint64 num_samples;//e.g. 65536 for that many results of known good RNGs used to construct raw_table
+			Uint64 num_duplicates;
+
+			double table[129];
+			double median;//redundant
+			double mean;
+			double stddev;
+
+			int limit;//0 if from 129, 6 if from 117, or should it reflect the raw number of samples?
+
+			static RawTestCalibrationData_129 *convert117to129(const RawTestCalibrationData_117 *old);
+
+			static const double ref_p[129];
+
+			double get_median_sample() const { return table[64]; }
+
+			//linear interpolation
+			double sample_to_index(double sample) const;
+			double index_to_sample(double index) const;
+			static double pvalue_to_index(double pvalue, int limit);
+			static double index_to_pvalue(double index, int limit);
+			double pvalue_to_sample(double pvalue) const { return index_to_sample(pvalue_to_index(pvalue, limit)); }
+			double sample_to_pvalue(double sample) const { return index_to_pvalue(sample_to_index(sample), limit); }
 		};
 	}//Tests
 }//PractRand

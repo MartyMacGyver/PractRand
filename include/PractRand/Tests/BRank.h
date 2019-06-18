@@ -33,7 +33,8 @@ namespace PractRand {
 				Uint32 size;
 				Uint64 time_per;
 				Uint64 total;
-				Uint64 counts[10];
+				enum { NUM_COUNTS = 10, MAX_OUTLIERS = 100 };
+				Uint64 counts[NUM_COUNTS];
 
 				Uint64 outliers_overflow;
 				std::vector<Uint32> outliers;

@@ -1,8 +1,19 @@
 namespace PractRand {
 	namespace Tests {
+		class BCFTFN : public TestBaseclass {
+		protected:
+			enum {LEVELS = 8};
+			long overlap, tbits, mask;
+			VariableSizeCount<Uint16> counts[LEVELS];
+			long current[LEVELS];
+			long warmup[LEVELS];
+		public:
+			BCFTFN(int funcmask = 1);
+
+		};
 		class BCFN_MT : public TestBaseclass {
 		protected:
-			enum { LEVELS = 32, THRESHOLDS_L2 = 4, THRESHOLDS=1<<THRESHOLDS_L2, INDEX_SIZE_L2 = 8, INDEX_SIZE = 1 << INDEX_SIZE_L2, TOTAL = THRESHOLDS * LEVELS };
+			enum { LEVELS = 32, THRESHOLDS_L2 = 2, THRESHOLDS=1<<THRESHOLDS_L2, INDEX_SIZE_L2 = 8, INDEX_SIZE = 1 << INDEX_SIZE_L2, TOTAL = THRESHOLDS * LEVELS };
 
 			VariableSizeCount<Uint16> counts[TOTAL];
 			long cur[TOTAL];

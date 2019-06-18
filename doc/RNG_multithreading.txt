@@ -8,8 +8,8 @@ to share RNG instances between threads.  While a lock could be added to
 an RNG to allow it to be shared, that is highly undesirable from a 
 performance perspective.  The recommended solution is to have a seperate 
 RNG object for each thread.  The easiest way to do that is to tell the 
-compiler that you want the variable located in thread-local-storage.  On 
-MSVC you do that by prefixing the type name with "__declspec(thread)".  
+compiler that you want the RNG instance located in thread-local-storage.
+On MSVC you do that by prefixing the type name with "__declspec(thread)".
 On GCC you do that by prefixing the type name with "__thread".  Most 
 other major C++ compiler use one of those two.  
 

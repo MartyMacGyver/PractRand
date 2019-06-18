@@ -30,6 +30,9 @@
     <ClInclude Include="..\..\tools\RNG_from_name.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\tools\SeedingTester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\tools\RNG_test.cpp">

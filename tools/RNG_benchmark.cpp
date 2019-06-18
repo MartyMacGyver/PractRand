@@ -3,6 +3,7 @@
 #include <cmath>
 #include <ctime>
 #include <string>
+#include <sstream>
 //#include <map>
 //#include <vector>
 //#include <list>
@@ -68,10 +69,10 @@ void benchmark_RNG_speeds() {
 #define PERF(RNG) printf("  %5.3f GB/s  :  %5.3f GB/s  :%7.0f KHz  :  %s\n", measure_RNG_performance< PractRand::RNGs::LightWeight:: RNG >()/1024, measure_RNG_performance<PractRand::RNGs::Polymorphic:: RNG >()/1024, benchmark_seeding<PractRand::RNGs::Polymorphic:: RNG >()/1000, #RNG );
 //#define PERF_POLYMORPHIC_ONLY(RNG) printf("  ----- GB/s  :  %5.3f GB/s  :  %s\n", measure_RNG_performance<PractRand::RNGs::Polymorphic:: RNG >()/1024, #RNG );
 #define PERF_POLYMORPHIC_ONLY(RNG) printf("  ----- GB/s  :  %5.3f GB/s  :%7.0f KHz  :  %s\n", measure_RNG_performance<PractRand::RNGs::Polymorphic:: RNG >()/1024, benchmark_seeding<PractRand::RNGs::Polymorphic:: RNG >()/1000, #RNG );
-#define PERF_CANIDATE(rng) { typedef Candidates:: raw_ ## rng RawRNG;typedef Candidates:: polymorphic_ ## rng PolymorphicRNG; const char *name = #rng ; printf("  %5.3f GB/s  :  %5.3f GB/s  :  %s\n", measure_RNG_performance< PractRand::RNGs::Adaptors::RAW_TO_LIGHT_WEIGHT_RNG< RawRNG > >()/1024, measure_RNG_performance<PolymorphicRNG>()/1024, name ); }
+#define PERF_CANIDATE(rng) { typedef Candidates:: raw_ ## rng RawRNG;typedef Candidates:: polymorphic_ ## rng PolymorphicRNG; const char *name = #rng ; printf("  %5.3f GB/s  :  %5.3f GB/s  :%7.0f KHz  :  %s\n", measure_RNG_performance< PractRand::RNGs::Adaptors::RAW_TO_LIGHT_WEIGHT_RNG< RawRNG > >()/1024, measure_RNG_performance<PolymorphicRNG>()/1024, benchmark_seeding<PolymorphicRNG>()/1000, name ); }
 #define PERF_CHACHA(RNG,ROUNDS) { PractRand::RNGs::LightWeight::RNG light_rng(PractRand::SEED_AUTO); PractRand::RNGs::Polymorphic::RNG poly_rng(PractRand::SEED_AUTO); light_rng.set_rounds(ROUNDS); poly_rng.set_rounds(ROUNDS); printf("  %5.3f GB/s  :  %5.3f GB/s  :%7.0f KHz  :  %s(%d)\n", _measure_RNG_performance_32(&light_rng)/1024, _measure_RNG_performance_32(&poly_rng)/1024, benchmark_seeding<PractRand::RNGs::Polymorphic:: RNG >()/1000, #RNG, ROUNDS );}
 //	printf("  light-weight   polymorphic    name\n");
-	printf("  light-weight   polymorphic    seeding      name\n");
+	printf("  light-weight   polymorphic    seeding       name\n");
 	printf("small fast RNGs:\n");
 	PERF(jsf32);
 	PERF(jsf64);
@@ -88,8 +89,8 @@ void benchmark_RNG_speeds() {
 	PERF(trivium);
 	PERF(isaac32x256);
 	PERF(isaac64x256);
-	PERF(efiix32x384);
-	PERF(efiix64x384);
+	PERF(efiix32x48);
+	PERF(efiix64x48);
 	//PERF(chacha);
 	PERF_CHACHA(chacha, 8);
 	PERF_CHACHA(chacha, 12);
@@ -102,10 +103,11 @@ void benchmark_RNG_speeds() {
 	PERF(mt19937);
 	printf("16 bit variants:\n");
 	PERF(sfc16);
-	PERF(efiix16x384);
+	PERF(efiix16x48);
 	printf("8 bit variants:\n");
-	PERF(efiix8x384);
+	PERF(efiix8x48);
 	printf("candidate RNGs: (not recommended, but almost)\n");
+	PERF_CANIDATE(siphash);
 	PERF_CANIDATE(VeryFast32)
 	PERF_CANIDATE(VeryFast64)
 	PERF_CANIDATE(sfc_alternative32)
@@ -117,8 +119,7 @@ void benchmark_RNG_speeds() {
 	PERF_CANIDATE(ranrot_variant16)
 	PERF_CANIDATE(ranrot_variant8)
 	PERF_CANIDATE(sfc_alternative16)
-	PERF_CANIDATE(xsm16);
-//	PERF_CANIDATE(mcx32)
+	//	PERF_CANIDATE(mcx32)
 //	PERF_CANIDATE(mcx64)
 #undef PERF
 #undef PERF_CANIDATE

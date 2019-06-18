@@ -1,10 +1,15 @@
 # PractRand
-A fork of the Practically Random suite of statistical tests &amp; psuedo-random number generators (RNGs, PRNGs)
+A fork /mirror of the Practically Random suite of statistical tests & psuedo-random number generators (RNGs, PRNGs)
 
 Based on PractRand from https://sourceforge.net/projects/pracrand/
 
-Building:
-It looks like MSVC >= 2012 should work for Windows. I don't plan to create binaries at this time though, and prefer to use platform-agnostic tools where possible.
+## Notes from latest
+
+FYI, `bin/` and `lib/` has MSVS 2012 x86 and x64 binaries from the original authors as above
+
+Building: The free Microsoft Visual Studio 2019 works fine for Windows. I don't plan to distribute my own binaries or updated project files at this time though, but it worked well when I tried it.
+
+## My notes from v0.92
 
 I've been able to build in Linux (Ubuntu) and Windows equally well.
 

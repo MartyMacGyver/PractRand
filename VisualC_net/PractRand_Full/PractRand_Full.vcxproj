@@ -103,6 +103,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <PostBuildEvent>
       <Command>
@@ -134,6 +135,7 @@
     </PostBuildEvent>
     <Lib>
       <TargetMachine>MachineX86</TargetMachine>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -172,8 +174,8 @@
     <ClCompile Include="..\..\src\RNGs\trivium.cpp" />
     <ClCompile Include="..\..\src\RNGs\xsm.cpp" />
     <ClCompile Include="..\..\src\sha2.cpp" />
-    <ClCompile Include="..\..\src\test_batteries.cpp" />
     <ClCompile Include="..\..\src\tests.cpp" />
+    <ClCompile Include="..\..\src\test_batteries.cpp" />
     <ClCompile Include="..\..\src\RNGs\efiix.cpp" />
     <ClCompile Include="..\..\src\RNGs\hc256.cpp" />
     <ClCompile Include="..\..\src\RNGs\isaac.cpp" />
@@ -193,18 +195,23 @@
     <ClInclude Include="..\..\include\PractRand\RNGs\all.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\arbee.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\chacha.h" />
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x384.h" />
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x384.h" />
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x384.h" />
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x384.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x48.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x48.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x48.h" />
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x48.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\salsa.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\sha2_based_pool.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\trivium.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\xsm32.h" />
     <ClInclude Include="..\..\include\PractRand\RNGs\xsm64.h" />
     <ClInclude Include="..\..\include\PractRand\Tests\BCFN_MT.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\birthday.h" />
     <ClInclude Include="..\..\include\PractRand\Tests\BRank.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\coup16.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\DistFreq4.h" />
     <ClInclude Include="..\..\include\PractRand\Tests\FPMulti.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\mod3.h" />
+    <ClInclude Include="..\..\include\PractRand\Tests\nearseq.h" />
     <ClInclude Include="..\..\include\PractRand\Tests\Pat5.h" />
     <ClInclude Include="..\..\include\PractRand_full.h" />
     <ClInclude Include="..\..\include\PractRand\rng_adaptors.h" />

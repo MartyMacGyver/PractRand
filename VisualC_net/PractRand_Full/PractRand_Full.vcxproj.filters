@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\src\test_batteries.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\RNGs\efiix.cpp">
       <Filter>Source Files\RNGs</Filter>
     </ClCompile>
@@ -103,6 +100,9 @@
       <Filter>Source Files\RNGs</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\non_uniform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -215,18 +215,6 @@
     <ClInclude Include="..\..\include\PractRand\RNGs\sha2_based_pool.h">
       <Filter>Header Files\RNGs</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x384.h">
-      <Filter>Header Files\RNGs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x384.h">
-      <Filter>Header Files\RNGs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x384.h">
-      <Filter>Header Files\RNGs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x384.h">
-      <Filter>Header Files\RNGs</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\PractRand\RNGs\xsm32.h">
       <Filter>Header Files\RNGs</Filter>
     </ClInclude>
@@ -252,6 +240,33 @@
       <Filter>Header Files\Tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\PractRand\Tests\Pat5.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\mod3.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\nearseq.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\coup16.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\DistFreq4.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix8x48.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix16x48.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix32x48.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\RNGs\efiix64x48.h">
+      <Filter>Header Files\RNGs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\PractRand\Tests\birthday.h">
       <Filter>Header Files\Tests</Filter>
     </ClInclude>
   </ItemGroup>

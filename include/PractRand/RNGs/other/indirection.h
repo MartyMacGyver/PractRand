@@ -15,6 +15,7 @@ namespace PractRand {
 			namespace NotRecommended {
 				//the classic cryptographic RNG
 				class rc4 : public vRNG8 {
+				protected:
 					Uint8 arr[256];
 					Uint8 a, b;
 				public:
@@ -26,14 +27,25 @@ namespace PractRand {
 
 				//weaker variant of the classic cryptographic RNG
 				//(same state transitions, different output)
-				class rc4_weakened : public vRNG8 {
-					Uint8 arr[256];
-					Uint8 a, b;
+				class rc4_weakenedA : public rc4 {
 				public:
 					Uint8 raw8();
 					std::string get_name() const;
-					//void seed (Uint64 s);
-					void walk_state(StateWalkingObject *);
+				};
+				class rc4_weakenedB : public rc4 {
+				public:
+					Uint8 raw8();
+					std::string get_name() const;
+				};
+				class rc4_weakenedC : public rc4 {
+				public:
+					Uint8 raw8();
+					std::string get_name() const;
+				};
+				class rc4_weakenedD : public rc4 {
+				public:
+					Uint8 raw8();
+					std::string get_name() const;
 				};
 
 
@@ -128,6 +140,97 @@ namespace PractRand {
 					std::string get_name() const;
 					efiix4_varqual(int iteration_table_size_L2, int indirection_table_size_L2);
 					~efiix4_varqual();
+				};
+
+				//generic indirection-based PRNGs, just for testing test suites
+				class genindA : public vRNG16 {
+					// 4:25, 5:27, 6:32, 7:38, 8:41, 9:46
+					Uint16 *table;
+					Uint16 a, i;
+					int table_size_mask;
+					int shift;
+				public:
+					genindA(int size_L2);
+					~genindA();
+					Uint16 raw16();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
+				};
+				class genindB : public vRNG16 {
+					//efiix-style, single pool, irreversible
+					// 0*:34, 1:30, 2:34, 3:39, 4:42
+					int shift;
+					int table_size_mask;
+					Uint16 *table;
+					Uint16 a, b, i;
+				public:
+					genindB(int size_L2);
+					~genindB();
+					Uint16 raw16();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
+				};
+				class genindC : public vRNG16 {
+					//split pool, bits fed in to the accumulator is limited to tsL2 per output
+					// 1*:23, 2:31, 3:36, 4:42
+					Uint16 *table;
+					Sint16 left;
+					Uint16 a;
+					int table_size_L2;
+				public:
+					Uint16 raw16() {
+						if (left >= 0) return table[left--];
+						else return refill();
+					}
+					genindC(int size_L2);
+					~genindC();
+					Uint16 refill();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
+				};
+				class genindD : public vRNG16 {
+					//fairly solid, RC4-style
+					// 2:25, 3:27, 4:30, 5:32, 6:35, 7:37, 8:39, 9:41, 10:43
+					Uint16 *table;
+					Uint16 a, i;
+					Uint16 mask;
+					Uint16 table_size_L2;
+				public:
+					Uint16 raw16();
+					genindD(int size_L2);
+					~genindD();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
+				};
+				class genindE : public vRNG16 {
+					//split pool
+					// 1:33, 2:39, 3:46
+					Uint16 *table1;
+					Uint16 *table2;
+					Uint16 a, i;
+					Uint16 mask;
+					Uint16 table_size_L2;
+				public:
+					Uint16 raw16();
+					genindE(int size_L2);
+					~genindE();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
+				};
+				class genindF : public vRNG16 {
+					//split pool
+					// 1:28, 2:34, 3:37, 4:40, 5:45
+					Uint16 *table1;
+					Uint16 *table2;
+					Uint16 a, i;
+					Uint16 mask;
+					Uint16 table_size_L2;
+				public:
+					Uint16 raw16();
+					genindF(int size_L2);
+					~genindF();
+					void walk_state(StateWalkingObject *);
+					std::string get_name() const;
 				};
 			}
 		}
