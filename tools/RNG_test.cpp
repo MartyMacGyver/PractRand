@@ -294,7 +294,7 @@ double print_result(const PractRand::TestResult &result, bool print_header = fal
 
 const char *seed_str = NULL;
 
-double show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bool smart_thresholds, double threshold, bool end_on_failure) {
+void show_checkpoint(TestManager *tman, int mode, Uint64 seed, double time, bool smart_thresholds, double threshold, bool end_on_failure) {
 	std::printf("rng=%s", tman->get_rng()->get_name().c_str());
 
 	std::printf(", seed=");

@@ -307,6 +307,7 @@ namespace RNG_Factories {
 				return new PractRand::RNGs::Polymorphic::NotRecommended::xlcg32of64_varqual(total_bits - out_bits);
 			else return new PractRand::RNGs::Polymorphic::NotRecommended::xlcg32of128_varqual(total_bits - out_bits);
 		}
+		return NULL;
 	}
 	PractRand::RNGs::vRNG *clcg_factory(std::vector<std::string> &params) {
 		if (params.size() != 2) {params.push_back("wrong number of parameters to clcg - should be clcg(out_bits,total_bits)");return NULL;}
