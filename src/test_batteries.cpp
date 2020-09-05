@@ -25,8 +25,8 @@
 #include "PractRand/Tests/CoupGap.h"
 #include "PractRand/Tests/BRank.h"
 #include "PractRand/Tests/mod3.h"
-#include "PractRand/Tests/NearSeq.h"
-#include "PractRand/Tests/Coup16.h"
+#include "PractRand/Tests/nearseq.h"
+#include "PractRand/Tests/coup16.h"
 #include "PractRand/Tests/DistFreq4.h"
 #include "PractRand/Tests/transforms.h"
 

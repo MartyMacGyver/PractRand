@@ -453,10 +453,10 @@ bool interpret_seed(const std::string &seedstr, Uint64 &seed) {
 	return true;
 }
 
-#include "PractRand/tests/Birthday.h"
-#include "PractRand/tests/FPMulti.h"
-#include "PractRand/tests/DistFreq4.h"
-#include "PractRand/tests/Gap16.h"
+#include "PractRand/Tests/birthday.h"
+#include "PractRand/Tests/FPMulti.h"
+#include "PractRand/Tests/DistFreq4.h"
+#include "PractRand/Tests/Gap16.h"
 PractRand::Tests::ListOfTests testset_BirthdaySystematic() {
 	//return PractRand::Tests::ListOfTests(new PractRand::Tests::FPMulti(3,0));
 	//return PractRand::Tests::ListOfTests(new PractRand::Tests::BirthdayAlt(10), new PractRand::Tests::Birthday32());
