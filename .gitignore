@@ -31,3 +31,9 @@
 x64/
 Win32/
 /VisualC_net/.vs
+
+# Unix build artifacts
+bin/RNG_benchmark
+bin/RNG_output
+bin/RNG_test
+bin/Test_calibration
